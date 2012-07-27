@@ -1,0 +1,40 @@
+Source: rear
+Section: utils
+Priority: optional
+Maintainer: Thomas Schumm <thomas.schumm@gmx.de>
+Original-Maintainer: Dag Wieers <dag@wieers.com>
+Build-Depends: debhelper (>= 8.0.0),
+               asciidoc (>= 8.5.2),
+               xmlto (>= 0.0.23)
+Standards-Version: 3.9.2
+Homepage: http://relax-and-recover.org/
+Vcs-Git: git://github.com/rear/rear.git
+Vcs-Browser: https://github.com/rear/rear
+
+Package: rear
+Architecture: all
+Depends: ${misc:Depends},
+         mingetty,
+         syslinux,
+         ethtool,
+         libc6,
+         lsb-release,
+         portmap,
+         genisoimage,
+         iputils-ping,
+         nfs-client,
+         binutils,
+         parted,
+         udev
+Suggests: bridge-utils,
+          btrfs-tools,
+          cryptsetup-bin,
+          reiserfsprogs,
+          dmsetup,
+          dosfstools,
+          lvm2
+Description: Relax and Recover is a bare metal disaster recovery and system
+ migration framework. See http://relax-and-recover.org/ for all the details.
+ We are still looking for a Debian package maintainer who would write better
+ packages. Please contact us to volunteer for maintaining Relax-and-Recover
+ in Debian and Ubuntu.

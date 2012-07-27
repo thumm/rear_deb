@@ -159,6 +159,8 @@ uninstall:
 
 dist: clean validate man rewrite $(name)-$(distversion).tar.gz restore
 
+tgz: $(name)-$(distversion).tar.gz
+
 $(name)-$(distversion).tar.gz:
 	@echo -e "\033[1m== Building archive $(name)-$(distversion) ==\033[0;0m"
 	git ls-tree -r --name-only --full-tree $(git_branch) | \
@@ -201,3 +203,6 @@ ifneq ($(obsname),$(name)-$(distversion))
 	rm -rf $(BUILD_DIR)
 	@echo -e "\033[1mNow visit https://build.opensuse.org/monitor/old or https://build.opensuse.org/monitor to inspect the queue and activity.\033[0;0m"
 endif
+
+build:
+	@echo "Nothing to do."

@@ -1,0 +1,243 @@
+rear (1.13.0~1-1) unstable; urgency=low
+
+  [ Gratien D'haese ]
+  * quick hack to avoid SVN/CVS/GIT related files in tar archive
+
+  [ Jeroen Hoekx ]
+  * layout: list Xen paravirtualized disks in disklayout.conf
+  * Use generic grub code for all distributions.
+
+  [ Dag Wieers ]
+  * Added fix for DAT320 tape drive, closes #35 (Kai-Olaf Pieth)
+
+  [ Dag Wieërs ]
+  * Since "mt seek" may not work on all tape devices, do not bail out when it fails. Closes #35. (Kai-Olaf Pieth)
+
+  [ Dag Wieers ]
+  * Replace StopIfFail with implementation (closes #80)
+  * Added configuration examples to the rear documentation
+  * Remove configuration examples (moved into rear documentation)
+  * Updated and improved the man page (fixed the project URL, closes #72)
+
+  [ Jeroen Hoekx ]
+  * Set tape drive if not in OUTPUT/BACKUP OBDR/TAPE.
+  * Always use non-rewinding tapes for OBDR only.
+  * Apply the changes from 5a9fb19b87c64b83b02838f1117ec6849af91696 in verify/.
+  * docs: change by-path to by-label for usb.
+  * Fix backup on USB media.
+
+  [ Dag Wieers ]
+  * Move design concepts from 'concept' document to official documentation
+
+  [ Jeroen Hoekx ]
+  * Fix inconsistent commenting in layout file.
+  * Change commenting in layout file to have no space after the #.
+  * Fix serial console on ubuntu 11.04.
+  * Make sure user lookup libraries are copied in multiarch.
+  * Sshd needs root:root on /var/empty.
+  * Remove /var/empty chown in run-syslog.
+  * Exclude /dev/shm itself.
+  * Reuse original lib locations.
+  * Simplify ramdisk rootfs lib/ structure.
+  * Remove special rsyslog libs location.
+
+  [ Dag Wieers ]
+  * Fix LVM name translations in case there is more than one dash/double-dash
+  * Get rid of all Sourceforge website references in favor of Github
+
+  [ Jeroen Hoekx ]
+  * Fix shutdown on upstart.
+  * Multiarch: create symlinks to the correct location.
+
+  [ Gratien D'haese ]
+  * Fix for issue #91
+  * Fix for issue #89 (if problems would reoccur then I re-open this)
+  * this closes #92
+
+  [ Brian Wiborg ]
+  * Fixing ebuild to be Gentoo compliant
+
+  [ root ]
+  * Fixed lvmvol dashes issue (issue 88)
+  * fix for #86
+
+  [ Jeroen Hoekx ]
+  * Move display of disk mapping table.
+  * Allow running Rear from checkout.
+
+  [ Dag Wieërs ]
+  * Remove obsolete COPYRIGHT and cosmetic change
+  * Moved AUTHORS, COPYING and README to root of tree
+  * Moved doc/ and contrib/ around, at some point we want to get rid of contrib/
+  * Remove packaging workflows
+  * Preliminary version of Makefile
+  * Remove old dr and recreate workflows, USE_LAYOUT is no longer optional
+  * Add 'validate' target to syntax check source-code
+  * Restore script from dr workflow for SUSE_LINUX
+  * Fix a small syntax error and use git information
+  * Remove references to mkdist, mkrpm, mkdeb, mktar, ...
+  * Add a small help message
+  * Fix another issue with 'make dist' target, improved help
+  * Hide the advanced help
+  * Update Makefile and default rear.spec
+  * Make default rear.spec less RHEL specific
+
+  [ Jeroen Hoekx ]
+  * Fix incorrect continue.
+  * Add new RAMDISK output method.
+  * Make RAMDISK the default output format.
+  * Update documentation for OUTPUT=RAMDISK.
+
+  [ Dag Wieërs ]
+  * Fix various issues with pax and rpmbuild.
+  * Fix a problem with blkid in a piece of deadwood
+  * Make rear aware if it is in recovery mode (using RECOVERY_MODE)
+  * Add missing file from previous commit to place /etc/rear-release
+  * Modify default LOGFILE, OUTPUT_URL and ISO_DIR to new standard.
+  * Verify OUTPUT_URL and BACKUP_URL for known user errors (e.g. file://some/path/)
+  * Fix url_path() in the correct way. It should return an absolute path in all cases !
+  * Get rid of lib/compatibility-functions.sh as we don't need rear_vol_id or blkid anymore.
+
+  [ Jeroen Hoekx ]
+  * Fix new logfile location to work from checkout.
+  * Create ramdisk file path if not existing.
+  * Fix format/obdr by symlinking the correct files.
+
+  [ Dag Wieërs ]
+  * Replace pax usage in Makefile by tar (hinted by @jhoekx)
+  * Added a small reminder to the validate target about pre-commit hooks
+  * Remove dangling symlink (symlink to itself)
+  * Clean up standard Rear output when verbose
+  * Check if whitelisted modules exists on the system
+  * Add --warning=no-xdev to suppress 'file is on a different filesystem; not dumped' message from tar
+  * Various small cosmetic changes to documentation, logging and output.
+  * These contrib/ files have no added value anymore
+
+  [ Jeroen Hoekx ]
+  * Create correct yaboot dir on ppc.
+  * Move cpio to REQUIRED_PROGS.
+  * RAMDISK: send verbose mkdir output to logfile.
+  * Modern udev is in /usr/lib/udev instead of /lib/udev.
+  * Update Arch Linux PKGBUILD for github.
+
+  [ Dag Wieërs ]
+  * Added Makefile targets for documentation, install local.conf, SPEC file updates
+  * Added Mandrive, beware that the OS_VERSION might not be as expected. Kill OS_VERSION !!
+  * Merged more specifics from the older rear SPEC file
+
+  [ Gratien D'haese ]
+  * This fix issue #87 (NBU and xinetd issue)
+  * This fix issue #87 (NBU and xinetd issue)
+
+  [ Jeroen Hoekx ]
+  * Makefile: only build the manpage by default.
+  * Update PKGBUILD to allow it to build the documentation.
+  * Do not prefix symlinks in 'make dist'.
+
+  [ Gratien D'haese ]
+  * Older distro's don't have swaplabel, but most have blkid. Therefore, added a section which uses blkid to grab the label and uuid of the swap. Fix close #46
+
+  [ Jeroen Hoekx ]
+  * TSM: add crypto library location not picked up by ldd.
+  * ppc: include kernel in iso.
+
+  [ Dag Wieërs ]
+  * Updated rear man page
+  * Improved Makefile to include OFFICIAL=1 option
+  * Simplify Makefile
+
+  [ Jeroen Hoekx ]
+  * Only ask for USB archive if BACKUP was on USB.
+  * No default OUTPUT_URL.
+
+  [ Dag Wieërs ]
+  * Use date from git log not from system time
+
+  [ Jeroen Hoekx ]
+  * Add obs make target to build rear snapshots on OBS.
+
+  [ Dag Wieërs ]
+  * Disable udev rules to accomodate SLES OBS builds
+  * Various small improvements to the Makefile obs target
+  * This is now obsolete
+  * Add a specific RPM rpmrelease macro to assist in OBS builds
+  * Updated default SPEC file
+  * Remove obsolete files
+  * Rebrand Rear as Relax-and-Recover where possible
+  * Prevent copying of result files when using tapes
+  * Improve warning and error messages when using tar (to tape or disk) or rsync
+  * Correct the mailinglist references
+  * Improve standard output if command does not exist
+  * Use the actual link...
+  * Add default guest option to mount.cifs
+
+  [ Jeroen Hoekx ]
+  * If no URL location given, copy RAMDISK to /var/lib/rear/output/.
+  * Automatic rescue image creation through udev is broken. Disable it.
+  * Add RAMDISK to manpage, rewrite portions of documentation.
+  * Revert "Automatic rescue image creation through udev is broken. Disable it."
+  * Update README with a quick start.
+  * Typo fixes in README.
+
+  [ Dag Wieërs ]
+  * Make mkisofs and genisoimage verbose
+  * Change default permissions to /etc/rear/ and /etc/rear/local.conf to protect Grub password
+  * Test tar features and set default options
+  * Improve log output somewhat
+  * Updates from @jhoekx
+
+  [ Gratien D'haese ]
+  * Move the lib/systemd to /usr/lib/systemd and made some changes to getty@.service
+
+  [ Dag Wieërs ]
+  * Change 'dist' and 'install' targets so that version and date are modified
+  * I assume BACKUP_URL was intended, rather than OUTPUT_URL
+  * Force restore modified files
+
+  [ Gratien D'haese ]
+  * move the echo into the IF block
+
+  [ Dag Wieërs ]
+  * Reorganize documentation
+  * Reorganize documentation
+  * Reorganize packaging stuff
+  * Change .tar.bz2 into .tar.gz for OBS DEB packages
+  * Improve output to indicate the log had been cut off
+  * recover command no longer part of standard output
+  * Shorten the message and turn it into a TIP rather than a WARNING
+  * Small changes
+  * Move contrib/ into packaging/ (much like ansible does it)
+  * Improve the text for the validation process
+  * Improve the use of $0, $PROGRAM and $SCRIPT_FILE by making it more consistent
+  * Avoid creating directories using lftp
+  * Fix errors in debian packaging (Thomas Schumm)
+  * Attempt to fix Debian package (fails, but hopefully closer?)
+  * Install /etc/rear/os.conf if available and not already installed
+  * Debian packages now build successfully, albeit not with the correct version
+  * Debian packages now build successfully, albeit not with the correct version
+  * Use official versions in tree
+  * Final release with proper Debian git version
+  * Don't add path twice to OUTPUT_URL
+  * Fix that some modules (ipv6.ko) could not be copied because a path was not absolute.
+  * Check if mkswap has the -U option (based on version check)
+  * Improved 'Software requirements' and 'Distribution support' sections
+
+  [ Thomas Schumm ]
+  * Add initial support for duplicity and duply
+
+  [ Dag Wieërs ]
+  * Use HOSTNAME instead of $(uname -n) in various places
+
+  [ Thomas Schumm ]
+  * Fixing some issues after first testing of duplicity / duply integration
+  * Merge duply/duplicity to one new backup method duplicity
+  * Revert some files
+
+  [ jezzaaa ]
+  * record mtu for network devices
+
+  [ Thomas Schumm ]
+  * Initial repository
+  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+
+ -- Thomas Schumm <thomas.schumm@gmx.de>  Fri, 27 Jul 2012 22:39:09 +0200
