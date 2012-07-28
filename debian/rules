@@ -6,3 +6,12 @@
 
 %:
 	dh $@ 
+
+override_dh_auto_build:
+	dh_auto_build -- doc
+
+override_dh_install:
+	dh_install
+	sed -i \
+	    -e 's#/usr/share/doc#/usr/share/doc/rear#' \
+	    debian/rear/usr/share/man/man8/rear.8

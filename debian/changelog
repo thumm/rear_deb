@@ -1,4 +1,4 @@
-rear (1.13.0~1-1) unstable; urgency=low
+rear (1.13.0~pre1-1) unstable; urgency=low
 
   [ Gratien D'haese ]
   * quick hack to avoid SVN/CVS/GIT related files in tar archive
