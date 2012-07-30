@@ -1,4 +1,6 @@
-rear (1.13.0~pre1-1) unstable; urgency=low
+rear (1.13.0+1~2757396-1) unstable; urgency=low
+
+  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
 
   [ Gratien D'haese ]
   * quick hack to avoid SVN/CVS/GIT related files in tar archive
@@ -157,7 +159,7 @@ rear (1.13.0~pre1-1) unstable; urgency=low
   * Add obs make target to build rear snapshots on OBS.
 
   [ Dag Wieërs ]
-  * Disable udev rules to accomodate SLES OBS builds
+  * Disable udev rules to accommodate SLES OBS builds
   * Various small improvements to the Makefile obs target
   * This is now obsolete
   * Add a specific RPM rpmrelease macro to assist in OBS builds
@@ -238,6 +240,5 @@ rear (1.13.0~pre1-1) unstable; urgency=low
 
   [ Thomas Schumm ]
   * Initial repository
-  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
 
  -- Thomas Schumm <thomas.schumm@gmx.de>  Fri, 27 Jul 2012 22:39:09 +0200

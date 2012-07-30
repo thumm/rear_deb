@@ -150,7 +150,7 @@ install-doc:
 		-e 's,/usr/share,$(datadir),' \
 		-e 's,/usr/share/doc/packages,$(datadir)/doc,' \
 		$(DESTDIR)$(mandir)/man8/rear.8
-	install -p -m0644 AUTHORS COPYING README $(DESTDIR)$(docdir)
+	install -p -m0644 AUTHORS README $(DESTDIR)$(docdir)
 
 
 install: validate install-config rewrite install-bin restore install-data install-var install-doc

@@ -1,0 +1,5 @@
+# The changelog is generated from git commit messages which can be longer than 80 chars
+rear binary: debian-changelog-line-too-long
+# The empty dirs are template dirs where custom sh-scripts can be placed
+# They are created to avoid mistakes creating these dirs with wrong names
+rear binary: package-contains-empty-directory

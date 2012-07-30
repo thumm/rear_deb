@@ -2,22 +2,21 @@ Source: rear
 Section: utils
 Priority: optional
 Maintainer: Thomas Schumm <thomas.schumm@gmx.de>
-Original-Maintainer: Dag Wieers <dag@wieers.com>
 Build-Depends: debhelper (>= 8.0.0),
                asciidoc (>= 8.5.2),
                xmlto (>= 0.0.23)
-Standards-Version: 3.9.2
+Standards-Version: 3.9.3
 Homepage: http://relax-and-recover.org/
 Vcs-Git: git://github.com/rear/rear.git
 Vcs-Browser: https://github.com/rear/rear
 
 Package: rear
 Architecture: all
-Depends: ${misc:Depends},
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
          mingetty,
          syslinux,
          ethtool,
-         libc6,
          lsb-release,
          portmap,
          genisoimage,
@@ -35,6 +34,17 @@ Suggests: bridge-utils,
           lvm2
 Description: Relax and Recover is a bare metal disaster recovery and system
  migration framework. See http://relax-and-recover.org/ for all the details.
- We are still looking for a Debian package maintainer who would write better
- packages. Please contact us to volunteer for maintaining Relax-and-Recover
- in Debian and Ubuntu.
+ .
+ Relax-and-Recover produces a bootable image. This image can repartition the
+ system. Once that is done it initiates a restore from backup. Restores to
+ different hardware are possible. Relax-and-Recover can therefore be used as
+ a migration tool as well.
+ .
+ Relax-and-Recover was designed to be easy to set up, requires no maintenance
+ and is there to assist when disaster strikes. Its setup-and-forget nature
+ removes any excuses for not having a disaster recovery solution implemented.
+ .
+ Recovering from disaster is made very straight-forward by a 2-step recovery
+ process so that it can be executed by operational teams when required. When
+ used interactively (e.g. when used for migrating systems), menus help make
+ decisions to restore to a new (hardware) environment.
