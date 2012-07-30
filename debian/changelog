@@ -1,4 +1,10 @@
-rear (1.13.0+1~2757396-1) unstable; urgency=low
+rear (1.13.0+1~2757396-1ubuntu1ppa2) precise; urgency=low
+
+  * Fix disto naming
+
+ -- Thomas Schumm <thomas.schumm@gmx.de>  Mon, 30 Jul 2012 20:52:36 +0200
+
+rear (1.13.0+1~2757396-1ubuntu1ppa1) unstable; urgency=low
 
   * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
 
