@@ -2,7 +2,7 @@ Source: rear
 Section: utils
 Priority: optional
 Maintainer: Thomas Schumm <thomas.schumm@gmx.de>
-Build-Depends: debhelper (>= 8.0.0),
+Build-Depends: debhelper (>= 7.4.15),
                asciidoc (>= 8.5.2),
                xmlto (>= 0.0.23)
 Standards-Version: 3.9.3
