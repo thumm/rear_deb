@@ -24,7 +24,10 @@ Depends: ${shlibs:Depends},
          nfs-client,
          binutils,
          parted,
-         udev
+         udev,
+         kbd,
+         iproute,
+         cpio
 Suggests: bridge-utils,
           btrfs-tools,
           cryptsetup-bin,
