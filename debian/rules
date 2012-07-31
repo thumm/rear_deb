@@ -4,6 +4,17 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+SHELL=/bin/bash
+
+name = rear
+debianversion := $(shell head -1 debian/changelog | cut -d "(" -f 2 | cut -d ")" -f 1 | cut -d "-" -f 1)
+git_available := $(shell if [ "$(shell which git)" != "" ]; then echo 1; else echo 0; fi)
+ifeq ($(git_available),1)
+  git_ref := $(shell git symbolic-ref -q HEAD)
+  git_branch ?= $(lastword $(subst /, ,$(git_ref)))
+  git_branch ?= HEAD
+endif
+
 %:
 	dh $@ 
 
@@ -15,3 +26,10 @@ override_dh_install:
 	sed -i \
 	    -e 's#/usr/share/doc#/usr/share/doc/rear#' \
 	    debian/rear/usr/share/man/man8/rear.8
+
+deborig:
+	@echo -e "== Building debian org archive $(name)_$(debianversion).orig.tar.gz =="
+	git ls-tree -r --name-only --full-tree $(git_branch) | \
+		grep -v -e "^debian/" | \
+		tar -czf ../$(name)_$(debianversion).orig.tar.gz --exclude-vcs --transform='s,^,$(name)-$(debianversion)/,S' --files-from=-
+

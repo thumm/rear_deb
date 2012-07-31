@@ -7,7 +7,6 @@ SHELL=/bin/bash
 rearbin = usr/sbin/rear
 name = rear
 version := $(shell awk 'BEGIN { FS="=" } /^VERSION=/ { print $$2}' $(rearbin))
-debianversion := $(shell head -1 debian/changelog | cut -d "(" -f 2 | cut -d ")" -f 1 | cut -d "-" -f 1)
 
 ### Get the branch information from git
 git_available := $(shell if [ "$(shell which git)" != "" ]; then echo 1; else echo 0; fi)
@@ -170,12 +169,6 @@ uninstall:
 #	rm -rv $(DESTDIR)$(localstatedir)/lib/rear/
 
 dist: clean validate man rewrite $(name)-$(distversion).tar.gz restore
-
-deborig:
-	@echo -e "\033[1m== Building debian org archive $(name)-$(distversion) ==\033[0;0m"
-	git ls-tree -r --name-only --full-tree $(git_branch) | \
-		grep -v -e "^debian/" | \
-		tar -czf ../$(name)_$(debianversion).orig.tar.gz --exclude-vcs --transform='s,^,$(name)-$(debianversion)/,S' --files-from=-
 
 $(name)-$(distversion).tar.gz:
 	@echo -e "\033[1m== Building archive $(name)-$(distversion) ==\033[0;0m"
