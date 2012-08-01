@@ -1,6 +1,6 @@
 rear (1.13.0+1~2757396-1) unstable; urgency=low
 
-  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+  * Initial release (Closes: #683422)
 
   [ Gratien D'haese ]
   * quick hack to avoid SVN/CVS/GIT related files in tar archive
