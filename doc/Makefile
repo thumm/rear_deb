@@ -26,6 +26,7 @@ install: docs
 clean:
 	make -C user-guide clean
 	rm -f unconv.8 *.html *.xml
+	make -C user-guide clean
 
 %.8.html: %.8.txt
 	asciidoc -d manpage $<
