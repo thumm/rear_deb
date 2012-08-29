@@ -1,0 +1,19 @@
+/var/log/rear/*.log {
+    rotate 12
+    weekly
+    compress
+    missingok
+}
+
+/var/log/rear/*.old {
+    rotate 12
+    weekly
+    compress
+    missingok
+}
+
+/var/log/rear/*.lockless {
+    rotate 12
+    weekly
+    compress
+    missingok

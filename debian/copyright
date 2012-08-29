@@ -1,41 +1,63 @@
 Format: http://dep.debian.net/deps/dep5
 Upstream-Name: rear
+Upstream-Contact: Dag Wieers <dag@wieers.com>
 Source: https://github.com/rear/rear
+Comment: The sources are available at Github and have been extracted
+ from the repository. For a untagged version the orig-
+ tar ball has been created by:
+   git clone git://github.com/rear/rear.git rear
+   cd rear
+   OUTNAME=rear_$(git describe | cut -d"-" -f2)+git$(git log -n 1 --format="%h")
+   git ls-tree -r --name-only --full-tree master | \
+     tar -czf ../${OUTNAME}.orig.tar.gz --exclude-vcs \
+       --transform="s,^,${OUTNAME}/,S" --files-from=-
+ For a tagged version (e.g. rear-1.13.0)
+   git clone git://github.com/rear/rear.git rear
+   cd rear
+   git checkout rear-1.13.0
+   git ls-tree -r --name-only --full-tree rear-1.13.0 | \
+     tar -czf ../$(git describe).orig.tar.gz --exclude-vcs \
+       --transform="s,^,$(git describe)/,S" --files-from=-
 
 Files: *
-Copyright: 2012 FIXME (add names here)
-License: GPL-2+
- This package is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 2 of the License, or
- (at your option) any later version.
- .
- This package is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- .
- You should have received a copy of the GNU General Public License
- along with this program. If not, see <http://www.gnu.org/licenses/>
- .
- On Debian systems, the complete text of the GNU General
- Public License version 2 can be found in "/usr/share/common-licenses/GPL-2".
+Copyright: (C) 2006-2012 Schlomo Schapiro
+           (C) 2006-2012 Gratien D'haese, IT3 Consultants
+           (C) 2006-2012 Jeroen Hoekx
+           (C) 2006-2012 Dag Wieers, Dagit Linux Solutions
+License: GPL-2
+   This package is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; Version 2, June 1991
+   .
+   This package is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+   .
+   You should have received a copy of the GNU General Public License
+   along with this program;  if not, write to the Free Software
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
+   MA 02110-1301, USA.
+   .
+   On Debian systems, the complete text of the GNU General
+   Public License version 2 can be found in "/usr/share/common-licenses/GPL-2".
 
 Files: debian/*
-Copyright: 2012 Thomas Schumm <thomas.schumm@gmx.de>
-License: GPL-2+
- This package is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 2 of the License, or
- (at your option) any later version.
- .
- This package is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- .
- You should have received a copy of the GNU General Public License
- along with this program. If not, see <http://www.gnu.org/licenses/>
- .
- On Debian systems, the complete text of the GNU General
- Public License version 2 can be found in "/usr/share/common-licenses/GPL-2".
+Copyright: (C) 2012 Thomas Schumm <thomas.schumm@gmx.de>
+License: GPL-3
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; version 3 dated June, 2007.
+   .
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+   .
+   You should have received a copy of the GNU General Public License
+   along with this program;  if not, write to the Free Software
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
+   MA 02110-1301, USA.
+   .
+   On Debian GNU/Linux systems, the complete text of the GNU General
+   Public License can be found in `/usr/share/common-licenses/GPL-3'.

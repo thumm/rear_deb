@@ -1,1 +1,3 @@
 * Add watch file to automate package update from upstream releases
+* The upstream solution produces some "strange" log files (eg *.lockless)
+  in /var/log/rear. Discuss it upstream to only produce *.log files.

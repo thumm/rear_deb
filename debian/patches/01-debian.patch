@@ -1,0 +1,85 @@
+# The Makefiles have to be changed to install the documentation in the right
+# location (see debian/patches/01-debian.patch). An upstream patch was
+# rejected because the location is distribution specific (see
+# https://github.com/rear/rear/pull/140#commitcomment-1654132)
+diff --git a/Makefile b/Makefile
+index 2740a46..b44fbca 100644
+--- a/Makefile
++++ b/Makefile
+@@ -24,6 +24,7 @@ sysconfdir = /etc
+ sbindir = $(prefix)/sbin
+ datadir = $(prefix)/share
+ mandir = $(datadir)/man
++docdir = $(datadir)/doc/rear
+ localstatedir = /var
+ 
+ specfile = packaging/rpm/$(name).spec
+@@ -154,6 +155,7 @@ install-doc:
+ 		-e 's,/usr/share,$(datadir),' \
+ 		-e 's,/usr/share/doc/packages,$(datadir)/doc,' \
+ 		$(DESTDIR)$(mandir)/man8/rear.8
++	install -p -m0644 AUTHORS README $(DESTDIR)$(docdir)
+ 
+ install: validate man install-config rewrite install-bin restore install-data install-var install-doc
+ 
+diff --git a/doc/Makefile b/doc/Makefile
+index 9005dff..024a970 100644
+--- a/doc/Makefile
++++ b/doc/Makefile
+@@ -1,6 +1,7 @@
+ prefix = /usr
+ datadir = $(prefix)/share
+ mandir = $(datadir)/man
++docdir = $(datadir)/doc/rear
+ 
+ txttargets = $(shell echo *.txt)
+ htmltargets = $(patsubst %.txt, %.html, $(txttargets))
+@@ -14,8 +15,13 @@ man: rear.8
+ docs: rear.8 $(htmltargets)
+ 	make -C user-guide docs
+ 
+-install: rear.8
++install: docs
+ 	install -Dp -m0644 rear.8 $(DESTDIR)$(mandir)/man8/rear.8
++	install -d -m0755 $(DESTDIR)$(docdir)
++	install -p -m0644 $(txttargets) $(DESTDIR)$(docdir)
++	install -p -m0644 $(htmltargets) $(DESTDIR)$(docdir)
++	-rm $(DESTDIR)$(docdir)/rear.8.txt $(DESTDIR)$(docdir)/rear.8.html
++	make -C user-guide install
+ 
+ clean:
+ 	rm -f unconv.8 *.html *.xml
+diff --git a/doc/user-guide/Makefile b/doc/user-guide/Makefile
+index a121336..90d1163 100644
+--- a/doc/user-guide/Makefile
++++ b/doc/user-guide/Makefile
+@@ -1,6 +1,7 @@
+ prefix = /usr
+ datadir = $(prefix)/share
+ mandir = $(datadir)/man
++docdir = $(datadir)/doc/rear
+ 
+ txttargets = relax-and-recover-user-guide.txt
+ htmltargets = $(patsubst %.txt, %.html, $(txttargets))
+@@ -11,6 +12,11 @@ dist: docs
+ 
+ docs: $(htmltargets)
+ 
++install: docs
++	install -d -m0755 $(DESTDIR)$(docdir)/user-guide
++	install -p -m0644 *.txt $(DESTDIR)$(docdir)/user-guide
++	install -p -m0644 $(htmltargets) $(DESTDIR)$(docdir)/user-guide
++
+ clean:
+ 	rm -f *.html *.svg *.xml
+ 
+diff --git a/etc/rear/local.conf b/etc/rear/local.conf
+index 33618eb..ae463f5 100644
+--- a/etc/rear/local.conf
++++ b/etc/rear/local.conf
+@@ -1,4 +1,4 @@
+ # sample local configuration
+ 
+ # Create Relax-and-Recover rescue media as ISO image
+-# OUTPUT=ISO
++OUTPUT=ISO

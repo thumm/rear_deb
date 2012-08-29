@@ -1,0 +1,16 @@
+My personal hints for packaging
+
+- version scheme
+  For packages based on not released git development commit
+    <last released version>+git<abbreviated commit hash>-<debian revision>
+  with
+    <abbreviated commit hash> == git log -n 1 --format="%h"
+
+- Howto generate a orig-tar-gz
+  Call
+    ./debian/rules get-orig-source
+
+- Testing with pbuilder
+  Using pbuilder-dist with symlinks in /usr/local/bin
+    pbuilder-unstable build *.dsc
+  Results are in ~/pbuilder

@@ -24,7 +24,6 @@ sysconfdir = /etc
 sbindir = $(prefix)/sbin
 datadir = $(prefix)/share
 mandir = $(datadir)/man
-docdir = $(datadir)/doc/rear
 localstatedir = /var
 
 specfile = packaging/rpm/$(name).spec
@@ -155,10 +154,8 @@ install-doc:
 		-e 's,/usr/share,$(datadir),' \
 		-e 's,/usr/share/doc/packages,$(datadir)/doc,' \
 		$(DESTDIR)$(mandir)/man8/rear.8
-	install -p -m0644 AUTHORS README $(DESTDIR)$(docdir)
 
-
-install: validate install-config rewrite install-bin restore install-data install-var install-doc
+install: validate man install-config rewrite install-bin restore install-data install-var install-doc
 
 uninstall:
 	@echo -e "\033[1m== Uninstalling Relax-and-Recover ==\033[0;0m"

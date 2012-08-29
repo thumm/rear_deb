@@ -1,12 +1,13 @@
 Source: rear
-Section: utils
+Section: admin
 Priority: optional
 Maintainer: Thomas Schumm <thomas.schumm@gmx.de>
-Build-Depends: debhelper (>= 7.4.15),
-               asciidoc (>= 8.5.2),
-               xmlto (>= 0.0.23),
-               source-highlight (>= 3.1.3)
 Standards-Version: 3.9.3
+Build-Depends: asciidoc (>= 8.5.2),
+               debhelper (>= 7.4.15),
+               quilt (>= 0.48-7),
+               source-highlight (>= 3.1.3),
+               xmlto (>= 0.0.23)
 Homepage: http://relax-and-recover.org/
 Vcs-Git: git://github.com/rear/rear.git
 Vcs-Browser: https://github.com/rear/rear
@@ -14,40 +15,43 @@ Vcs-Browser: https://github.com/rear/rear
 Package: rear
 Architecture: all
 Depends: ${misc:Depends},
-         mingetty,
-         syslinux,
-         ethtool,
-         lsb-release,
-         portmap,
+         bootcd,
+         cpio,
          genisoimage,
-         iputils-ping,
-         nfs-client,
-         binutils,
-         parted,
-         udev,
-         kbd,
          iproute,
-         cpio
-Suggests: bridge-utils,
+         kbd,
+         lsb-release,
+         mingetty,
+         parted
+Suggests: binutils,
+          bridge-utils,
           btrfs-tools,
           cryptsetup-bin,
-          reiserfsprogs,
           dmsetup,
           dosfstools,
-          lvm2
-Description: Relax and Recover is a bare metal disaster recovery and system
- migration framework. See http://relax-and-recover.org/ for all the details.
- .
- Relax-and-Recover produces a bootable image. This image can repartition the
- system. Once that is done it initiates a restore from backup. Restores to
- different hardware are possible. Relax-and-Recover can therefore be used as
- a migration tool as well.
- .
- Relax-and-Recover was designed to be easy to set up, requires no maintenance
- and is there to assist when disaster strikes. Its setup-and-forget nature
- removes any excuses for not having a disaster recovery solution implemented.
+          ethtool,
+          iputils-ping,
+          lvm2,
+          module-init-tools,
+          nfs-client,
+          portmap,
+          syslinux,
+          reiserfsprogs,
+          udev
+Description: bare metal disaster recovery and system migration solution
+ Relax-and-Recover produces a boot-able image which can recreate the system's
+ original storage layout. Once that is done it initiates a restore from backup.
+ Since the storage layout can be modified prior to recovery, dissimilar
+ hardware and virtualization is supported, Relax-and-Recover offers the
+ flexibility to be used for complex system migrations, supports various boot
+ media as well as a multitude of backup strategies.
  .
  Recovering from disaster is made very straight-forward by a 2-step recovery
- process so that it can be executed by operational teams when required. When
- used interactively (e.g. when used for migrating systems), menus help make
- decisions to restore to a new (hardware) environment.
+ process so that it can be executed by operational teams when required.
+ When used interactively (e.g. when used for migrating systems), menus help
+ make decisions to restore to a new (hardware) environment.
+ .
+ Extending and integrating Relax-and-Recover into complex environments is made
+ possible by its modular framework. Consistent logging and optionally extended
+ output help understand the concepts behind Relax-and-Recover, troubleshoot
+ during initial configuration and help debug during integration.
