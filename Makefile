@@ -3,18 +3,25 @@
 # assumes bash. So its better to set SHELL
 SHELL=/bin/bash
 
+DESTDIR =
+OFFICIAL =
+
 ### Get version from Relax-and-Recover itself
 rearbin = usr/sbin/rear
 name = rear
 version := $(shell awk 'BEGIN { FS="=" } /^VERSION=/ { print $$2}' $(rearbin))
 
 ### Get the branch information from git
+ifeq ($(OFFICIAL),)
 ifneq ($(shell which git),)
 git_date := $(shell git log -n 1 --format="%ai")
 git_ref := $(shell git symbolic-ref -q HEAD)
-git_branch ?= $(lastword $(subst /, ,$(git_ref)))
-git_branch ?= HEAD
+git_branch = $(lastword $(subst /, ,$(git_ref)))
 endif
+else
+git_branch = rear-$(version)
+endif
+git_branch ?= master
 
 date := $(shell date --date="$(git_date)" +%Y%m%d%H%M)
 release_date := $(shell date --date="$(git_date)" +%Y-%m-%d)
@@ -29,12 +36,9 @@ localstatedir = /var
 specfile = packaging/rpm/$(name).spec
 dscfile = packaging/debian/$(name).dsc
 
-DESTDIR =
-OFFICIAL =
-
 distversion = $(version)
 debrelease = 0
-rpmrelease =
+rpmrelease = %nil
 obsproject = Archiving:Backup:Rear
 obspackage = $(name)
 ifeq ($(OFFICIAL),)
@@ -53,11 +57,12 @@ help:
 	@echo -e "Relax-and-Recover make targets:\n\
 \n\
   validate        - Check source code\n\
-  install         - Install Relax-and-Recover to DESTDIR (may replace files)\n\
-  uninstall       - Uninstall Relax-and-Recover from DESTDIR (may remove files)\n\
+  install         - Install Relax-and-Recover (may replace files)\n\
+  uninstall       - Uninstall Relax-and-Recover (may remove files)\n\
   dist            - Create tar file\n\
   deb             - Create DEB package\n\
   rpm             - Create RPM package\n\
+  obs             - Initiate OBS builds\n\
 \n\
 Relax-and-Recover make variables (optional):\n\
 \n\
@@ -169,6 +174,7 @@ dist: clean validate man rewrite $(name)-$(distversion).tar.gz restore
 
 $(name)-$(distversion).tar.gz:
 	@echo -e "\033[1m== Building archive $(name)-$(distversion) ==\033[0;0m"
+	git checkout $(git_branch)
 	git ls-tree -r --name-only --full-tree $(git_branch) | \
 		tar -czf $(name)-$(distversion).tar.gz --transform='s,^,$(name)-$(distversion)/,S' --files-from=-
 
@@ -207,5 +213,6 @@ ifneq ($(obsname),$(name)-$(distversion))
 	osc add $(BUILD_DIR)/$(name)-$(distversion).tar.gz
 	osc ci -m "Update to $(name)-$(distversion)" $(BUILD_DIR)
 	rm -rf $(BUILD_DIR)
-	@echo -e "\033[1mNow visit https://build.opensuse.org/monitor/old or https://build.opensuse.org/monitor to inspect the queue and activity.\033[0;0m"
+	@echo -e "\033[1mNow visit https://build.opensuse.org/package/show?package=rear&project=$(obsproject)"
+	@echo -e "or inspect the queue at: https://build.opensuse.org/monitor\033[0;0m"
 endif
