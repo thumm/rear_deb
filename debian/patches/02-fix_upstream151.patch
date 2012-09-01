@@ -1,0 +1,18 @@
+# Fix for upstream issue https://github.com/rear/rear/issues/151
+diff --git a/usr/share/rear/layout/save/GNU/Linux/23_filesystem_layout.sh b/usr/share/rear/layout/save/GNU/Linux/23_filesystem_layout.sh
+index 34d72d3..24493cd 100644
+--- a/usr/share/rear/layout/save/GNU/Linux/23_filesystem_layout.sh
++++ b/usr/share/rear/layout/save/GNU/Linux/23_filesystem_layout.sh
+@@ -15,6 +15,12 @@ Log "Saving Filesystem layout."
+             continue
+         fi
+ 
++        if [[ $device == /dev/disk/by-uuid* ]]; then
++          ndevice=$(realpath $device)
++          Log "Mapping $device to $ndevice"
++          device=$ndevice
++        fi
++
+         echo -n "fs $device $mountpoint $fstype "
+         case "$fstype" in
+             ext*)
