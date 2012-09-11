@@ -3,18 +3,14 @@
 set -e
 
 DEBIANVERSION=$(head -1 debian/changelog | cut -d "(" -f 2 | cut -d ")" -f 1 | cut -d "-" -f 1)
-GITCOMMIT=$(echo ${DEBIANVERSION} | cut -d "+" -f 2 | cut -c4-)
+GITCOMMIT=$(echo ${DEBIANVERSION} | cut -d "+" -f 2 | cut -c12-)
 # GITCOMMIT == DEBIANVERSION if DEBIANVERSION like "[0-9]+.[0-9]+.[0-9]+
 # GITCOMMIT == <git commit id> if DEBIANVERSION like "[0-9]+.[0-9]+.[0-9]+\+git<git commit id>"
 
 git clone -q git://github.com/rear/rear.git debian/rear_repo
 cd debian/rear_repo
 git checkout -q $GITCOMMIT
-if [ "$DEBIANVERSION" != "$GITCOMMIT" ]; then
-  OUTNAME=rear_$(git describe | cut -d"-" -f2)+git$(git log -n 1 --format="%h")
-else
-  OUTNAME=rear_${DEBIANVERSION}
-fi
+OUTNAME=rear_${DEBIANVERSION}
 git ls-tree -r --name-only --full-tree master | \
 tar -czf ../../../${OUTNAME}.orig.tar.gz --exclude-vcs \
   --transform="s,^,${OUTNAME}/,S" --files-from=-
