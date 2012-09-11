@@ -7,7 +7,7 @@
 distversion:=$(shell head -1 debian/changelog | cut -d"(" -f2 | cut -d")" -f1)
 
 %:
-	dh --with quilt $@ 
+	dh $@ 
 
 override_dh_auto_build:
 	dh_auto_build -- doc

@@ -1,4 +1,4 @@
-rear (1.13.0+git5e11e6d-1) unstable; urgency=low
+rear (1.13.0+20120911git5e11e6d-1) unstable; urgency=low
 
   * Initial release (Closes: #683422)
   * Changes in upstream sources
@@ -10,4 +10,4 @@ rear (1.13.0+git5e11e6d-1) unstable; urgency=low
     The empty dirs are template dirs where custom bash-scripts can be placed.
     They are created to avoid mistakes creating these dirs eg. with wrong names.
 
- -- Thomas Schumm <thomas.schumm@gmx.de>  Fri, 27 Jul 2012 22:39:09 +0200
+ -- Thomas Schumm <thomas.schumm@gmx.de>  Tue, 11 Sep 2012 20:38:12 +0200

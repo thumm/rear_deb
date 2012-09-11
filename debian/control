@@ -5,12 +5,11 @@ Maintainer: Thomas Schumm <thomas.schumm@gmx.de>
 Standards-Version: 3.9.3
 Build-Depends: asciidoc (>= 8.5.2),
                debhelper (>= 7.4.15),
-               quilt (>= 0.48-7),
                source-highlight (>= 3.1.3),
                xmlto (>= 0.0.23)
 Homepage: http://relax-and-recover.org/
-Vcs-Git: git://github.com/rear/rear.git
-Vcs-Browser: https://github.com/rear/rear
+Vcs-Git: git://github.com/thumm/rear_deb.git
+Vcs-Browser: https://github.com/thumm/rear_deb
 
 Package: rear
 Architecture: all

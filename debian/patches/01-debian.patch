@@ -83,3 +83,41 @@ index 33618eb..ae463f5 100644
  # Create Relax-and-Recover rescue media as ISO image
 -# OUTPUT=ISO
 +OUTPUT=ISO
+diff --git a/usr/sbin/rear b/usr/sbin/rear
+index af536af..05d17be 100755
+--- a/usr/sbin/rear
++++ b/usr/sbin/rear
+@@ -131,7 +131,11 @@ source $SHARE_DIR/conf/default.conf
+ 
+ # include functions
+ for script in $SHARE_DIR/lib/*.sh ; do
+-	source $script
++        if [[ -s ${script/$SHARE_DIR/$CONFIG_DIR} ]]; then
++                source ${script/$SHARE_DIR/$CONFIG_DIR}
++        else
++	        source $script
++        fi
+ done
+ 
+ if ! has_binary pidof; then
+diff --git a/usr/share/rear/lib/framework-functions.sh b/usr/share/rear/lib/framework-functions.sh
+index 1e9f698..fef81f5 100644
+--- a/usr/share/rear/lib/framework-functions.sh
++++ b/usr/share/rear/lib/framework-functions.sh
+@@ -37,7 +37,15 @@ function Source() {
+ 
+ 			Log "Including ${1##$SHARE_DIR/}"
+ 			test "$DEBUGSCRIPTS" && set -x
+-			. "$1"
++                        if [[ $1 == ${SHARE_DIR}* ]]; then
++                                if [[ -s ${1/$SHARE_DIR/$CONFIG_DIR} ]]; then
++                                        . "${1/$SHARE_DIR/$CONFIG_DIR}"
++                                else
++                                        . "$1"
++                                fi
++                        else
++			        . "$1"
++                        fi
+ 			test "$DEBUGSCRIPTS" && set +x
+ 			[[ "$BREAKPOINT" && "$relname" == @($BREAKPOINT) ]] && read -p "Press ENTER to continue ..." 2>&1
+ 		fi
