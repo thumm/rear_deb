@@ -1,4 +1,4 @@
-rear (1.13.0+20120911git5e11e6d-1) unstable; urgency=low
+rear (1.14-1) unstable; urgency=low
 
   * Initial release (Closes: #683422)
   * Changes in upstream sources
