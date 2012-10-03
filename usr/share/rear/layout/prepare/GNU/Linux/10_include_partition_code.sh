@@ -192,7 +192,10 @@ EOF
 
         # Explicitly name GPT partitions
         if [[ "$label" = "gpt" ]] && [[ "$name" != "rear-noname" ]] ; then
-            echo "parted -s $device name $number \"$name\"" >> $LAYOUT_CODE
+            echo "parted -s $device name $number \"$name\" >&2" >> $LAYOUT_CODE
         fi
     done < <(grep "^part $device" $LAYOUT_FILE)
+
+# Ensure we have the new partitioning on the device
+echo "partprobe -s $device >&2" >> $LAYOUT_CODE
 }
