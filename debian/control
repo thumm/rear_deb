@@ -45,6 +45,9 @@ Description: bare metal disaster recovery and system migration solution
  flexibility to be used for complex system migrations, supports various boot
  media as well as a multitude of backup strategies.
  .
+ It has to be installed on the system for which a recovery image should be
+ created.
+ .
  Recovering from disaster is made very straight-forward by a 2-step recovery
  process so that it can be executed by operational teams when required.
  When used interactively (e.g. when used for migrating systems), menus help
