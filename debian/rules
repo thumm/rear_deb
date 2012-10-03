@@ -13,6 +13,7 @@ override_dh_auto_build:
 	dh_auto_build -- doc
 
 override_dh_install:
+	install -d -m0750 debian/rear/var/lib/rear/output/
 	dh_install
 	sed -i \
 	    -e 's#^VERSION=.*#VERSION="$(distversion) (Debian)"#' \
