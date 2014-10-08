@@ -2,26 +2,6 @@
 # location (see debian/patches/01-debian.patch). An upstream patch was
 # rejected because the location is distribution specific (see
 # https://github.com/rear/rear/pull/140#commitcomment-1654132)
-diff --git a/Makefile b/Makefile
-index 2740a46..b44fbca 100644
---- a/Makefile
-+++ b/Makefile
-@@ -24,6 +24,7 @@ sysconfdir = /etc
- sbindir = $(prefix)/sbin
- datadir = $(prefix)/share
- mandir = $(datadir)/man
-+docdir = $(datadir)/doc/rear
- localstatedir = /var
- 
- specfile = packaging/rpm/$(name).spec
-@@ -154,6 +155,7 @@ install-doc:
- 		-e 's,/usr/share,$(datadir),' \
- 		-e 's,/usr/share/doc/packages,$(datadir)/doc,' \
- 		$(DESTDIR)$(mandir)/man8/rear.8
-+	install -p -m0644 AUTHORS README $(DESTDIR)$(docdir)
- 
- install: validate man install-config rewrite install-bin restore install-data install-var install-doc
- 
 diff --git a/doc/Makefile b/doc/Makefile
 index 9005dff..024a970 100644
 --- a/doc/Makefile
@@ -73,16 +53,6 @@ index a121336..90d1163 100644
  clean:
  	rm -f *.html *.svg *.xml
  
-diff --git a/etc/rear/local.conf b/etc/rear/local.conf
-index 33618eb..ae463f5 100644
---- a/etc/rear/local.conf
-+++ b/etc/rear/local.conf
-@@ -1,4 +1,4 @@
- # sample local configuration
- 
- # Create Relax-and-Recover rescue media as ISO image
--# OUTPUT=ISO
-+OUTPUT=ISO
 diff --git a/usr/sbin/rear b/usr/sbin/rear
 index af536af..05d17be 100755
 --- a/usr/sbin/rear
@@ -100,36 +70,6 @@ index af536af..05d17be 100755
  done
  
  if ! has_binary pidof; then
-diff --git a/usr/share/rear/lib/framework-functions.sh b/usr/share/rear/lib/framework-functions.sh
-index 1e9f698..5674e0b 100644
---- a/usr/share/rear/lib/framework-functions.sh
-+++ b/usr/share/rear/lib/framework-functions.sh
-@@ -26,7 +26,7 @@ function Source() {
- 	fi
- 	[[ ! -d "$1" ]]
- 	StopIfError "$1 is a directory, cannot source"
--	if test -s "$1" ; then
-+	if [ -s "$1" ] || [ -s "${1/$SHARE_DIR/$CONFIG_DIR}" ]; then
- 		local relname="${1##$SHARE_DIR/}"
- 		if test "$SIMULATE" && expr "$1" : "$SHARE_DIR" >&8; then
- 			# simulate sourcing the scripts in $SHARE_DIR
-@@ -37,7 +37,15 @@ function Source() {
- 
- 			Log "Including ${1##$SHARE_DIR/}"
- 			test "$DEBUGSCRIPTS" && set -x
--			. "$1"
-+                        if [[ $1 == ${SHARE_DIR}* ]]; then
-+                                if [[ -s ${1/$SHARE_DIR/$CONFIG_DIR} ]]; then
-+                                        . "${1/$SHARE_DIR/$CONFIG_DIR}"
-+                                else
-+                                        . "$1"
-+                                fi
-+                        else
-+			        . "$1"
-+                        fi
- 			test "$DEBUGSCRIPTS" && set +x
- 			[[ "$BREAKPOINT" && "$relname" == @($BREAKPOINT) ]] && read -p "Press ENTER to continue ..." 2>&1
- 		fi
 diff --git a/usr/share/rear/lib/dump-workflow.sh b/usr/share/rear/lib/dump-workflow.sh
 index b2d8cda..d040d14 100644
 --- a/usr/share/rear/lib/dump-workflow.sh
@@ -143,3 +83,60 @@ index b2d8cda..d040d14 100644
  									)" )"
  		fi
  	done
+diff --git a/Makefile b/Makefile
+index 43d27af..1bcc729 100644
+--- a/Makefile
++++ b/Makefile
+@@ -31,6 +31,7 @@ sysconfdir = /etc
+ sbindir = $(prefix)/sbin
+ datadir = $(prefix)/share
+ mandir = $(datadir)/man
++docdir = $(datadir)/doc/rear
+ localstatedir = /var
+ 
+ specfile = packaging/rpm/$(name).spec
+@@ -160,6 +161,7 @@ install-doc:
+ 		-e 's,/usr/share,$(datadir),' \
+ 		-e 's,/usr/share/doc/packages,$(datadir)/doc,' \
+ 		$(DESTDIR)$(mandir)/man8/rear.8
++	install -p -m0644 AUTHORS README $(DESTDIR)$(docdir)
+ 
+ install: validate man install-config rewrite install-bin restore install-data install-var install-doc
+ 
+diff --git a/etc/rear/site.conf b/etc/rear/site.conf
+new file mode 100644
+index 0000000..ca1d51e
+--- /dev/null
++++ b/etc/rear/site.conf
+@@ -0,0 +1 @@
++OUTPUT=ISO
+diff --git a/usr/share/rear/lib/framework-functions.sh b/usr/share/rear/lib/framework-functions.sh
+index a689ccb..2f980f0 100644
+--- a/usr/share/rear/lib/framework-functions.sh
++++ b/usr/share/rear/lib/framework-functions.sh
+@@ -26,7 +26,7 @@ function Source() {
+ 	fi
+ 	[[ ! -d "$1" ]]
+ 	StopIfError "$1 is a directory, cannot source"
+-	if test -s "$1" ; then
++	if [ -s "$1" ] || [ -s "${1/$SHARE_DIR/$CONFIG_DIR}" ]; then
+ 		local relname="${1##$SHARE_DIR/}"
+ 		if test "$SIMULATE" && expr "$1" : "$SHARE_DIR" >&8; then
+ 			# simulate sourcing the scripts in $SHARE_DIR
+@@ -39,7 +39,15 @@ function Source() {
+ 
+ 			Log "Including ${1##$SHARE_DIR/}"
+ 			test "$DEBUGSCRIPTS" && set -x
+-			. "$1"
++			if [[ $1 == ${SHARE_DIR}* ]]; then
++				if [[ -s ${1/$SHARE_DIR/$CONFIG_DIR} ]]; then
++					. "${1/$SHARE_DIR/$CONFIG_DIR}"
++				else
++					. "$1"
++				fi
++			else
++				. "$1"
++			fi
+ 			test "$DEBUGSCRIPTS" && set +x
+ 			[[ "$BREAKPOINT" && "$relname" == $BREAKPOINT ]] && read -p "Press ENTER to continue ..." 2>&1
+ 		fi
