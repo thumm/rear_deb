@@ -1,0 +1,98 @@
+rear for Debian
+---------------
+
+---------------------
+1. QUICK START GUIDE
+---------------------
+
+This quick start guide will show you how to run Relax-and-Recover on a
+Debian based system. Two scenarios are described:
+- Creating a bootable USB stick
+- Creating a ISO-Image
+
+1.1 Creating a bootable USB stick
+-----------------------------
+
+Prepare your USB media. Change /dev/sdb to the correct device in your situation.
+Relax-and-Recover will 'own' the device in this example.
+
+***This will destroy all data on that device.***
+
+    sudo rear format /dev/sdb
+
+Relax-and-recover asks you to confirm that you want to format the device:
+
+    Yes
+
+The device has been labeled REAR-000 by the 'format' workflow.
+
+Now edit the '/etc/rear/local.conf' configuration file:
+
+----
+    cat > etc/rear/local.conf <<EOF
+### write the rescue initramfs to USB and update the USB bootloader
+OUTPUT=USB
+
+### create a backup using the internal NETFS method, using 'tar'
+BACKUP=NETFS
+
+### write both rescue image and backup to the device labeled REAR-000
+BACKUP_URL=usb:///dev/disk/by-label/REAR-000
+EOF
+----
+
+Now you are ready to create a rescue image. We want verbose output.
+
+    sudo usr/sbin/rear -v mkrescue
+
+The output I get is:
+----
+Relax-and-Recover 1.13.0 / $Date$
+Using log file: /home/jeroen/tmp/quickstart/rear/var/log/rear/rear-fireflash.log
+Creating disk layout
+Creating root filesystem layout
+TIP: To login as root via ssh you need to set up /root/.ssh/authorized_keys
+Copying files and directories
+Copying binaries and libraries
+Copying kernel modules
+Creating initramfs
+Writing MBR to /dev/sdb
+Copying resulting files to usb location
+----
+
+You might want to check the log file for possible errors or see what
+Relax-and-Recover is doing.
+
+Now reboot your system and try to boot from the USB device.
+
+If that worked, you can dive into the advanced Relax-and-Recover options and
+start creating full backups. If your USB device has enough space, initiate a
+backup using:
+
+    sudo usr/sbin/rear -v mkbackup
+
+That is it. You are now better prepared for failure !
+
+-----------------------------------------------------
+2. Common hints
+-----------------------------------------------------
+
+* Rear has it's own machine / architecture naming conventions which maybe
+  confusing. The machine types x86_64, i686 and i586 are all mapped to a
+  i386 rear machine / architecture type to avoid code duplication.
+  For example a call
+  
+    rear dump
+  
+  produces an output of
+  
+    This is a 'Linux-x86_64' system, compatible with 'Linux-i386'.
+    System definition:
+    ARCH = Linux-i386
+  
+  on a x86_64 machine (e. g. with wheezy amd64). Don't be confused, everything
+  is working fine!
+
+* Überschreiben der Skripte unter /usr/share/rear/...
+
+ -- Thomas Schumm <thomas.schumm@gmx.de>  Wed, 03 Oct 2012 20:38:09 +0200

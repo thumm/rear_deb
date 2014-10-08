@@ -101,9 +101,18 @@ index af536af..05d17be 100755
  
  if ! has_binary pidof; then
 diff --git a/usr/share/rear/lib/framework-functions.sh b/usr/share/rear/lib/framework-functions.sh
-index 1e9f698..fef81f5 100644
+index 1e9f698..5674e0b 100644
 --- a/usr/share/rear/lib/framework-functions.sh
 +++ b/usr/share/rear/lib/framework-functions.sh
+@@ -26,7 +26,7 @@ function Source() {
+ 	fi
+ 	[[ ! -d "$1" ]]
+ 	StopIfError "$1 is a directory, cannot source"
+-	if test -s "$1" ; then
++	if [ -s "$1" ] || [ -s "${1/$SHARE_DIR/$CONFIG_DIR}" ]; then
+ 		local relname="${1##$SHARE_DIR/}"
+ 		if test "$SIMULATE" && expr "$1" : "$SHARE_DIR" >&8; then
+ 			# simulate sourcing the scripts in $SHARE_DIR
 @@ -37,7 +37,15 @@ function Source() {
  
  			Log "Including ${1##$SHARE_DIR/}"
@@ -121,3 +130,16 @@ index 1e9f698..fef81f5 100644
  			test "$DEBUGSCRIPTS" && set +x
  			[[ "$BREAKPOINT" && "$relname" == @($BREAKPOINT) ]] && read -p "Press ENTER to continue ..." 2>&1
  		fi
+diff --git a/usr/share/rear/lib/dump-workflow.sh b/usr/share/rear/lib/dump-workflow.sh
+index b2d8cda..d040d14 100644
+--- a/usr/share/rear/lib/dump-workflow.sh
++++ b/usr/share/rear/lib/dump-workflow.sh
+@@ -41,7 +41,7 @@ WORKFLOW_dump () {
+ 		"$OS_VENDOR" "$OS_VENDOR_ARCH" "$OS_VENDOR_VERSION" "$OS_VENDOR_VERSION_ARCH"; do
+ 		if [ "$config" ] ; then
+ 			LogPrint "$( printf "%40s : %s" "$config".conf "$(
+-									test -s $SHARE_DIR/conf/"$config".conf && echo OK || echo missing/empty
++									(test -s $SHARE_DIR/conf/"$config".conf && echo OK) || (test -s $CONFIG_DIR/conf/"$config".conf && echo OK) || echo missing/empty
+ 									)" )"
+ 		fi
+ 	done
