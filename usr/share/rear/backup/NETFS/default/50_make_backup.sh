@@ -31,10 +31,38 @@ done < $TMP_DIR/backup-exclude.txt
 
 local scheme=$(url_scheme $BACKUP_URL)
 local path=$(url_path $BACKUP_URL)
-local opath=$(output_path $scheme $path)
+local opath=$(backup_path $scheme $path)
 
 if [[ "$opath" ]]; then
     mkdir -p $v "${opath}" >&2
+fi
+
+# Disable BACKUP_PROG_CRYPT_OPTIONS by replacing the default value to cat in 
+# case encryption is disabled
+if (( $BACKUP_PROG_CRYPT_ENABLED == 1 )); then
+  LogPrint "Encrypting archive with key: $BACKUP_PROG_CRYPT_KEY"
+else
+  LogPrint "Encrypting disabled"
+  BACKUP_PROG_CRYPT_OPTIONS="cat"
+  BACKUP_PROG_CRYPT_KEY=""
+fi 
+
+# Check if the backup needs to be splitted or not
+if [[ -n "$ISO_MAX_SIZE" ]]; then
+    # Computation of the real backup maximum size by excluding bootable files size on the first ISO (EFI, kernel, ramdisk)
+    # Don't use that on max size less than 200MB which would result in too many backups
+    if [[ $ISO_MAX_SIZE -gt 200 ]]; then
+        INITRD_SIZE=$(stat -c '%s' $TMP_DIR/initrd.cgz)
+        KERNEL_SIZE=$(stat -c '%s' $KERNEL_FILE)
+        # We add 15MB which is the average size of all isolinux binaries
+        BASE_ISO_SIZE=$(((${INITRD_SIZE}+${KERNEL_SIZE})/1024/1024+15))
+        # If we are EFI, add 30MB (+ previous 15MB), UEFI files can't exceed this size
+        [[ $USING_UEFI_BOOTLOADER ]] && BASE_ISO_SIZE=$((${BASE_ISO_SIZE}+30))
+        ISO_MAX_SIZE=$((${ISO_MAX_SIZE}-${BASE_ISO_SIZE}))
+    fi
+    SPLIT_COMMAND="split -d -b ${ISO_MAX_SIZE}m - ${backuparchive}."
+else
+    SPLIT_COMMAND="dd of=$backuparchive"
 fi
 
 LogPrint "Creating $BACKUP_PROG archive '$backuparchive'"
@@ -47,15 +75,17 @@ case "$(basename ${BACKUP_PROG})" in
 		Log $BACKUP_PROG $TAR_OPTIONS --sparse --block-number --totals --verbose \
 			--no-wildcards-match-slash --one-file-system \
 			--ignore-failed-read $BACKUP_PROG_OPTIONS \
+			$BACKUP_PROG_X_OPTIONS \
 			${BACKUP_PROG_BLOCKS:+-b $BACKUP_PROG_BLOCKS} $BACKUP_PROG_COMPRESS_OPTIONS \
-			-X $TMP_DIR/backup-exclude.txt -C / -c -f "$backuparchive" \
-			$(cat $TMP_DIR/backup-include.txt) $LOGFILE
+			-X $TMP_DIR/backup-exclude.txt -C / -c -f - \
+			$(cat $TMP_DIR/backup-include.txt) $LOGFILE \| $BACKUP_PROG_CRYPT_OPTIONS $BACKUP_PROG_CRYPT_KEY \| $SPLIT_COMMAND
 		$BACKUP_PROG $TAR_OPTIONS --sparse --block-number --totals --verbose \
 			--no-wildcards-match-slash --one-file-system \
 			--ignore-failed-read $BACKUP_PROG_OPTIONS \
+			$BACKUP_PROG_X_OPTIONS \
 			${BACKUP_PROG_BLOCKS:+-b $BACKUP_PROG_BLOCKS} $BACKUP_PROG_COMPRESS_OPTIONS \
-			-X $TMP_DIR/backup-exclude.txt -C / -c -f "$backuparchive" \
-			$(cat $TMP_DIR/backup-include.txt) $LOGFILE
+			-X $TMP_DIR/backup-exclude.txt -C / -c -f - \
+			$(cat $TMP_DIR/backup-include.txt) $LOGFILE | $BACKUP_PROG_CRYPT_OPTIONS $BACKUP_PROG_CRYPT_KEY | $SPLIT_COMMAND
 	;;
 	(rsync)
 		# make sure that the target is a directory
@@ -78,7 +108,7 @@ case "$(basename ${BACKUP_PROG})" in
 			$BACKUP_PROG_OPTIONS $backuparchive \
 			$(cat $TMP_DIR/backup-include.txt) $LOGFILE > $backuparchive
 	;;
-esac >"${TMP_DIR}/${BACKUP_PROG_ARCHIVE}.log"
+esac 2> "${TMP_DIR}/${BACKUP_PROG_ARCHIVE}.log"
 # important trick: the backup prog is the last in each case entry and the case .. esac is the last command
 # in the (..) subshell. As a result the return code of the subshell is the return code of the backup prog!
 ) &
@@ -96,8 +126,9 @@ function get_disk_used() {
 case "$(basename ${BACKUP_PROG})" in
 	(tar)
 		while sleep 1 ; kill -0 $BackupPID 2>&8; do
-			blocks="$(tail -1 ${TMP_DIR}/${BACKUP_PROG_ARCHIVE}.log | awk 'BEGIN { FS="[ :]" } /^block [0-9]+: / { print $2 }')"
-			size="$((blocks*512))"
+			#blocks="$(stat -c %b ${backuparchive})"
+			#size="$((blocks*512))"
+			size="$(stat -c %s ${backuparchive}* | awk '{s+=$1} END {print s}')"
 			#echo -en "\e[2K\rArchived $((size/1024/1024)) MiB [avg $((size/1024/(SECONDS-starttime))) KiB/sec]"
 			ProgressInfo "Archived $((size/1024/1024)) MiB [avg $((size/1024/(SECONDS-starttime))) KiB/sec]"
 		done
@@ -135,6 +166,10 @@ transfertime="$((SECONDS-starttime))"
 wait $BackupPID
 backup_prog_rc=$?
 
+if [[ $BACKUP_INTEGRITY_CHECK =~ ^[yY1] && "$(basename ${BACKUP_PROG})" = "tar" ]] ; then
+    (cd $(dirname $backuparchive) && md5sum $(basename $backuparchive) > ${backuparchive}.md5 || md5sum $(basename $backuparchive).?? > ${backuparchive}.md5)
+fi
+
 sleep 1
 
 # everyone should see this warning, even if not verbose
@@ -162,12 +197,15 @@ system properly. Relax-and-Recover is therefore aborting execution.
 "
         fi;;
     (*)
+        if (( $backup_prog_rc > 0 )) ; then
             Error "$(basename $BACKUP_PROG) failed with return code $backup_prog_rc
 
 This means that the archiving process ended prematurely, or did
 not even start. As a result it is unlikely you can recover this
 system properly. Relax-and-Recover is therefore aborting execution.
-";;
+"
+        fi
+        ;;
 esac
 
 tar_message="$(tac $LOGFILE | grep -m1 '^Total bytes written: ')"

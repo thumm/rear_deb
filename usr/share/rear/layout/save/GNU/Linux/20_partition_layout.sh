@@ -45,7 +45,7 @@ extract_partitions() {
     fi
 
     ### collect basic information
-    : > $TMP_DIR/partitions
+    : > $TMP_DIR/partitions_unsorted
 
     declare partition_name partition_prefix start_block
     declare partition_nr size start
@@ -57,7 +57,7 @@ extract_partitions() {
         partition_name=${partition_name#/dev/}
         partition_name=${partition_name#mapper/}
 
-        partition_nr=$(echo "$partition_name" | grep -E -o '[0-9]+$')
+        partition_nr=$(get_partition_number "$partition_name")
 
         partition_prefix=${partition_name%$partition_nr}
 
@@ -70,8 +70,11 @@ extract_partitions() {
             start="unknown"
         fi
 
-        echo "$partition_nr $size $start">> $TMP_DIR/partitions
+        echo "$partition_nr $size $start">> $TMP_DIR/partitions_unsorted
     done
+
+    # do a numeric sort to have the partitions in numeric order (see #352)
+    sort -n  $TMP_DIR/partitions_unsorted > $TMP_DIR/partitions
 
     if [[ ! -s $TMP_DIR/partitions ]] ; then
         Debug "No partitions found on $device."
@@ -87,6 +90,7 @@ extract_partitions() {
         parted -s $device print > $TMP_DIR/parted
         disk_label=$(grep -E "Partition Table|Disk label" $TMP_DIR/parted | cut -d ":" -f "2" | tr -d " ")
     fi
+
 
     cp $TMP_DIR/partitions $TMP_DIR/partitions-data
 
@@ -116,6 +120,7 @@ extract_partitions() {
                 if [[ -z "$type" ]] ; then
                     type="rear-noname"
                 fi
+                type=$(echo "$type" | sed -e 's/ /0x20/g') # replace spaces with 0x20 in name field
                 sed -i /^$partition_nr\ /s/$/\ $type/ $TMP_DIR/partitions
             done < $TMP_DIR/partitions-data
         else
@@ -141,6 +146,7 @@ extract_partitions() {
                     type="rear-noname"
                 fi
 
+                type=$(echo "$type" | sed -e 's/ /0x20/g')
                 sed -i /^$number\ /s/$/\ $type/ $TMP_DIR/partitions
             done < <(grep -E '^[ ]*[0-9]' $TMP_DIR/parted)
         fi
@@ -155,7 +161,7 @@ extract_partitions() {
             ### only report flags parted can actually recreate
             flags=""
             for flag in $flaglist ; do
-                if [[ "$flag" = @(boot|root|swap|hidden|raid|lvm|lba|palo|legacy_boot|bios_grub) ]] ; then
+                if [[ "$flag" = boot || "$flag" = root || "$flag" = swap || "$flag" = hidden || "$flag" = raid || "$flag" = lvm || "$flag" = lba || "$flag" = palo || "$flag" = legacy_boot || "$flag" = bios_grub ]] ; then
                     flags="$flags$flag,"
                 fi
             done
@@ -187,7 +193,7 @@ extract_partitions() {
             ### only report flags parted can actually recreate
             flags=""
             for flag in $flaglist ; do
-                if [[ "$flag" = @(boot|root|swap|hidden|raid|lvm|lba|palo|legacy_boot|bios_grub) ]] ; then
+                if [[ "$flag" = boot || "$flag" = root || "$flag" = swap || "$flag" = hidden || "$flag" = raid || "$flag" = lvm || "$flag" = lba || "$flag" = palo || "$flag" = legacy_boot || "$flag" = bios_grub ]] ; then
                     flags="$flags$flag,"
                 fi
             done
@@ -209,7 +215,7 @@ extract_partitions() {
             if has_binary sfdisk ; then
                 declare partition_id=$(sfdisk -c $device $partition_nr 2>&8)
                 ### extended partitions are either DOS_EXT, EXT_LBA or LINUX_EXT
-                if [[ "$partition_id" = @(5|f|85) ]]; then
+                if [[ "$partition_id" = 5 || "$partition_id" = f || "$partition_id" = 85 ]]; then
                     sed -i /^$partition_nr\ /s/\ primary\ /\ extended\ / $TMP_DIR/partitions
                 fi
             else
@@ -239,7 +245,8 @@ Log "Saving disk partitions."
     # Disk sizes
     # format: disk <disk> <sectors> <partition label type>
     for disk in /sys/block/* ; do
-        if [[ ${disk#/sys/block/} = @(hd*|sd*|cciss*|vd*|xvd*) ]] ; then
+        blockd=${disk#/sys/block/}
+        if [[ $blockd = hd* || $blockd = sd* || $blockd = cciss* || $blockd = vd* || $blockd = xvd* ]] ; then
             devname=$(get_device_name $disk)
             devsize=$(get_disk_size ${disk#/sys/block/})
 

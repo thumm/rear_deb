@@ -15,6 +15,9 @@ if [[ -z "$NOBOOTLOADER" ]] ; then
     return
 fi
 
+# for UEFI systems with grub2 with should use efibootmgr instead
+[[ ! -z "$USING_UEFI_BOOTLOADER" ]] && return # not empty means UEFI booting
+
 # Only for GRUB2 - GRUB Legacy will be handled by its own script
 [[ $(type -p grub-probe) || $(type -p grub2-probe) ]] || return
 
@@ -38,19 +41,21 @@ if [[ -r "$LAYOUT_FILE" && -r "$LAYOUT_DEPS" ]]; then
     [[ -r "/mnt/local/boot/$grub_name/grub.cfg" ]]
     LogIfError "Unable to find /boot/$grub_name/grub.cfg."
 
-    # Find exclusive partitions belonging to /boot (subtract root partitions from deps)
-    bootparts=$( (find_partition fs:/boot; find_partition fs:/) | sort | uniq -u )
-    grub_prefix=/grub
-    if [[ -z "$bootparts" ]]; then
+    # Find exclusive partition(s) belonging to /boot
+    # or / (if /boot is inside root filesystem)
+    if [[ "$(filesystem_name /mnt/local/boot)" == "/mnt/local" ]]; then
         bootparts=$(find_partition fs:/)
         grub_prefix=/boot/grub2
+    else
+        bootparts=$(find_partition fs:/boot)
+        grub_prefix=/grub2
     fi
     # Should never happen
     [[ "$bootparts" ]]
     BugIfError "Unable to find any /boot partitions"
 
     # Find the disks that need a new GRUB MBR
-    disks=$(grep '^disk ' $LAYOUT_FILE | cut -d' ' -f2)
+    disks=$(grep '^disk \|^multipath ' $LAYOUT_FILE | cut -d' ' -f2)
     [[ "$disks" ]]
     StopIfError "Unable to find any disks"
 
@@ -60,7 +65,7 @@ if [[ -r "$LAYOUT_FILE" && -r "$LAYOUT_DEPS" ]]; then
 
         # Use boot partition that matches with this disk, if any
         for bootpart in $bootparts; do
-            bootdisk=$(find_disk "$bootpart")
+            bootdisk=$(find_disk_and_multipath "$bootpart")
             if [[ "$disk" == "$bootdisk" ]]; then
                 part=$bootpart
                 break
@@ -68,7 +73,7 @@ if [[ -r "$LAYOUT_FILE" && -r "$LAYOUT_DEPS" ]]; then
         done
 
         # Find boot-disk and partition number
-        bootdisk=$(find_disk "$part")
+        bootdisk=$(find_disk_and_multipath "$part")
         partnr=${part#$bootdisk}
         partnr=${partnr#p}
         partnr=$((partnr - 1))

@@ -26,7 +26,7 @@ if has_binary sshd; then
 	${PROGS[@]}
 	ssh sshd scp sftp
 	$(
-		read subsys sftp file junk < <( grep sftp /etc/sshd_co[n]fig /etc/ssh/sshd_co[n]fig 2>&8 )
+		read subsys sftp file junk < <( grep sftp /etc/sshd_co[n]fig /etc/ssh/sshd_co[n]fig /etc/openssh/sshd_co[n]fig 2>&8 )
 		echo $file
 	)
 	)
@@ -46,6 +46,11 @@ if has_binary sshd; then
 
 	# print a warning if there is no authorized_keys file for root
 	if test ! -f "/root/.ssh/authorized_keys" ; then
-		LogPrint "TIP: To login as root via ssh you need to set up /root/.ssh/authorized_keys"
+		LogPrint "TIP: To login as root via ssh you need to set up /root/.ssh/authorized_keys or SSH_ROOT_PASSWORD in your configuration file"
+	fi
+	
+	# Set the SSH root password
+	if [[ $SSH_ROOT_PASSWORD ]] ; then
+		echo "root:$(echo $SSH_ROOT_PASSWORD | openssl passwd -1 -stdin):::::::" > $ROOTFS_DIR/etc/shadow
 	fi
 fi

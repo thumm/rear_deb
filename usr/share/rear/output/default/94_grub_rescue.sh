@@ -1,3 +1,6 @@
+# This file is part of Relax and Recover, licensed under the GNU General
+# Public License. Refer to the included LICENSE for full text of license.
+
 ### Add the rescue kernel and initrd to the local GRUB Legacy
 ###
 
@@ -7,30 +10,33 @@ if [[ ! "$GRUB_RESCUE" =~ ^[yY1] ]]; then
 fi
 
 ### Only do when system has GRUB Legacy
+[[ $(type -p grub-probe) || $(type -p grub2-probe) ]] && return
+
 grub_binary=$(get_path grub)
 if [[ -z "$grub_binary" ]]; then
-    Log "Could not find grub binary."
+    Log "Could not find grub (legacy) binary."
     return
 fi
 
 ### Use strings as grub --version syncs all disks
 #grub_version=$(get_version "grub --version")
-grub_version=$(get_version "strings $grub_binary")
+grub_version=$(strings $grub_binary | sed -rn 's/^[^0-9\.]*([0-9]+\.[-0-9a-z\.]+).*$/\1/p' | tail -n 1)
 if version_newer "$grub_version" 1.0; then
+    # only for grub-legacy we make special rear boot entry in menu.lst 
     return
 fi
 
 [[ -r "$KERNEL_FILE" ]]
 StopIfError "Failed to find kernel, updating GRUB failed."
 
-[[ -r "$KERNEL_FILE" ]]
+[[ -r "$TMP_DIR/initrd.cgz" ]]
 StopIfError "Failed to find initrd.cgz, updating GRUB failed."
 
 function total_filesize {
     stat --format '%s' $@ 2>&8 | awk 'BEGIN { t=0 } { t+=$1 } END { print t }'
 }
 
-available_space=$(df -Pk /boot | awk 'END { print $4 * 1024 }')
+available_space=$(df -Pkl /boot | awk 'END { print $4 * 1024 }')
 used_space=$(total_filesize /boot/rear-kernel /boot/rear-initrd.cgz)
 required_space=$(total_filesize $KERNEL_FILE $TMP_DIR/initrd.cgz)
 
@@ -41,7 +47,11 @@ if (( available_space + used_space < required_space )); then
     return
 fi
 
-grub_conf=$(readlink -f /boot/grub/menu.lst)
+if [ -n "$USING_UEFI_BOOTLOADER" ]; then
+    grub_conf="`dirname $UEFI_BOOTLOADER`/grub.conf"
+else
+    grub_conf=$(readlink -f /boot/grub/menu.lst)
+fi
 [[ -w "$grub_conf" ]]
 StopIfError "GRUB configuration cannot be modified."
 

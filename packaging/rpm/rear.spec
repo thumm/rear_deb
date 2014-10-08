@@ -7,13 +7,15 @@
 
 Summary: Relax-and-Recover is a Linux disaster recovery and system migration tool
 Name: rear
-Version: 1.14
+Version: 1.16.1
 Release: 1%{?rpmrelease}%{?dist}
 License: GPLv3
 Group: Applications/File
 URL: http://relax-and-recover.org/
 
-Source: https://github.com/downloads/rear/rear/rear-%{version}.tar.gz
+# as GitHub stopped with download section we need to go back to Sourceforge for downloads
+Source: https://sourceforge.net/projects/rear/files/rear/%{version}/rear-%{version}.tar.gz
+
 BuildRoot: %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
 BuildArch: noarch
@@ -23,10 +25,11 @@ Requires: binutils
 Requires: ethtool
 Requires: gzip
 Requires: iputils
-Requires: mingetty
 Requires: parted
 Requires: tar
-Requires: util-linux
+Requires: openssl
+Requires: gawk
+Requires: attr
 
 ### If you require NFS, you may need the below packages
 #Requires: nfsclient portmap rpcbind
@@ -80,9 +83,19 @@ Requires: mkisofs
 
 ### On RHEL/Fedora the genisoimage packages provides mkisofs
 %if %{?centos_version:1}%{?fedora_version:1}%{?rhel_version:1}0
+Requires: crontabs
 Requires: iproute
 Requires: mkisofs
 #Requires: redhat-lsb
+%endif
+
+# mingetty is not available anymore with RHEL 7 (use agetty instead via systemd)
+# Note that CentOS also has %rhel defined so there is no need to use %centos
+%if 0%{?rhel} && 0%{?rhel} > 6
+Requires: util-linux
+%else
+Requires: mingetty
+Requires: util-linux
 %endif
 
 ### The rear-snapshot package is no more
@@ -99,7 +112,8 @@ a migration tool as well.
 Currently Relax-and-Recover supports various boot media (incl. ISO, PXE,
 OBDR tape, USB or eSATA storage), a variety of network protocols (incl.
 sftp, ftp, http, nfs, cifs) as well as a multitude of backup strategies
-(incl.  IBM TSM, HP DataProtector, Symantec NetBackup, Bacula, rsync).
+(incl.  IBM TSM, HP DataProtector, Symantec NetBackup, EMC NetWorker,
+Bacula, Bareos, rsync).
 
 Relax-and-Recover was designed to be easy to set up, requires no maintenance
 and is there to assist when disaster strikes. Its setup-and-forget nature
@@ -108,7 +122,7 @@ removes any excuse for not having a disaster recovery solution implemented.
 Professional services and support are available.
 
 %prep
-%setup -q
+%setup -q 
 
 echo "30 1 * * * root /usr/sbin/rear checklayout || /usr/sbin/rear mkrescue" >rear.cron
 
@@ -135,7 +149,7 @@ echo "30 1 * * * root /usr/sbin/rear checklayout || /usr/sbin/rear mkrescue" >re
 %defattr(-, root, root, 0755)
 %doc AUTHORS COPYING README doc/*.txt
 %doc %{_mandir}/man8/rear.8*
-%config(noreplace) %{_sysconfdir}/cron.d/rear/
+%config(noreplace) %{_sysconfdir}/cron.d/rear
 %config(noreplace) %{_sysconfdir}/rear/
 #%config(noreplace) %{_sysconfdir}/udev/rules.d/62-rear-usb.rules
 %{_datadir}/rear/
@@ -143,5 +157,8 @@ echo "30 1 * * * root /usr/sbin/rear checklayout || /usr/sbin/rear mkrescue" >re
 %{_sbindir}/rear
 
 %changelog
+* Thu Apr 11 2013 Gratien D'haese <gratien.dhaese@gmail.com>
+- changes Source
+
 * Thu Jun 03 2010 Dag Wieers <dag@wieers.com>
 - Initial package. (using DAR)

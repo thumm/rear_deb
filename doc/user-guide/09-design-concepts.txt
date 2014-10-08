@@ -30,19 +30,19 @@ by appropriately named scripts in various subdirectories:
      This can also come from various sources (FS layout for arch, OS, OS_VER,
      Backup-SW, Output, ...)
 
-  2. *Analyse (DR)*: Analyse the system to create the '/etc/recovery' data
+  2. *Analyse disklayout*: Analyse the system disklayout to create the '/var/lib/rear/layout/' data
 
   3. *Analyse (Rescue):* Analyse the system to create the rescue system
-     (network, binary dependancies, ...)
+     (network, binary dependencies, ...)
 
   4. *Build:* Build the rescue image by copying together everything required
 
   5. *Pack:* Package the kernel and initrd image together
 
-  6. *Backup:* (Optionally) run the backup sowftware to create a current backup
+  6. *Backup:* (Optionally) run the backup software to create a current backup
 
   7. *Output:* Copy / Install the rescue system (kernel+initrd+(optionally)
-     backups) into the target environemnt (e.g. PXE boot, write on tape,
+     backups) into the target environment (e.g. PXE boot, write on tape,
      write on CD/DVD)
 
   8. *Cleanup:* Cleanup the build area from temporary files
@@ -51,16 +51,20 @@ The configuration must define the +BACKUP+ and +OUTPUT+ methods. Valid choices a
 
 |====
 |NAME   | TYPE    | Description                              | Implement in Phase
-|NFS    | BACKUP  | Copy files to NFS share                  | 1
-|TAPE   | BACKUP  | Copy files to tape(s)                    | 2
-|CDROM  | BACKUP  | Copy files to CD/DVD                     | 2
-|NSR    | BACKUP  | Use Legato Networker                     | 1
-|TSM    | BACKUP  | Use Tivoli Storage Manager               | 1
+|NFS    | BACKUP  | Copy files to NFS share                  | done
+|TAPE   | BACKUP  | Copy files to tape(s)                    | done
+|CDROM  | BACKUP  | Copy files to CD/DVD                     | to be sponsored
+|NSR    | BACKUP  | Use Legato Networker                     | done
+|TSM    | BACKUP  | Use Tivoli Storage Manager               | done
+|DP     | BACKUP  | Use HP DataProtector                     | done
+|NBU    | BACKUP  | Use Symantec NetBackup                   | done
+|BACULA | BACKUP  | Use Bacula                               | done
+|BAREOS | BACKUP  | Use fork of Bacula                       | done
 |       |         |                                          |
-|CDROM  | OUTPUT  | Write result to CD/DVD                   | 2
-|OBDR   | OUTPUT  | Create OBDR Tape                         | 2
-|PXE    | OUTPUT  | Create PXE bootable files on TFTP server | 1
-|USB    | OUTPUT  | Create bootable USB device               | 2
+|ISO    | OUTPUT  | Write result to ISO9660 image            | done
+|OBDR   | OUTPUT  | Create OBDR Tape                         | done
+|PXE    | OUTPUT  | Create PXE bootable files on TFTP server | done
+|USB    | OUTPUT  | Create bootable USB device               | done
 |====
 
 == Workflow – Recovery
@@ -82,8 +86,8 @@ are indeed the same):
      This makes writing pairs of backup/restore modules much easier.
 
   2. *Verify:* Verify the integrity and sanity of the recovery data and
-     check the hardware found to determine, wether a recovery will be
-     likely to suceed. If not, then we abort the workflow so as not to
+     check the hardware found to determine, whether a recovery will be
+     likely to succeed. If not, then we abort the workflow so as not to
      touch the hard disks if we don't believe that we would manage to
      successfully recover the system on this hardware.
 
@@ -97,13 +101,13 @@ are indeed the same):
      onto '/var/log/rear/' in the recovered system.
 
 == FS layout
-Relax-and-Recover tries to be as much LSB complient as possible. Therefore rear will be
+Relax-and-Recover tries to be as much LSB compliant as possible. Therefore rear will be
 installed into the usual locations:
 
 /etc/rear/::
     Configurations
 
-/usr/bin/rear::
+/usr/sbin/rear::
     Main program
 
 /usr/share/rear/::
@@ -177,17 +181,22 @@ prep/$OUTPUT/*.sh::
     +
     where 00 < ## < 99
 
-dr/default/*.sh::
-dr/$(uname -i)/*.sh::
-dr/$OS_OS_VER/*.sh::
-dr/$BACKUP/*.sh::
-dr/$OUTPUT/*.sh::
-    Analyse-DR scripts. The scripts get merged from the applicable directories
-    and executed in their alphabetical order. Naming conventions are:
-    +
-    ##_name.sh
-    +
-    where 00 < ## < 99
+layout/compare/default/::
+layout/compare/$OS_$OS_VER/::
+    Scripts to compare the saved layout (under /var/lib/rear/layout/) with the actual situation. This is used by workflow *rear checklayout* and may trigger a new run of *rear mkrescue* or *rear mkbackup*
+
+layout/precompare/default/::
+layout/precompare/$OS_$OS_VER/::
+
+layout/prepare/default/::
+layout/prepare/$OS_$OS_VER/::
+
+layout/recreate/default/::
+layout/recreate/$OS_$OS_VER/::
+
+layout/save/default/::
+layout/save/$OS_$OS_VER/::
+    Scripts to capture the disk layout and write it into /var/lib/rear/layout/ directory
 
 rescue/...::
     Analyse-Rescue scripts: ...
@@ -218,7 +227,7 @@ finalize/...::
     Finalization scripts
 
 == Inter-module communication
-The various stages and modules communicate via standarized environment variables:
+The various stages and modules communicate via standardized environment variables:
 
 |====
 |NAME             |TYPE         |Descriptions                         |Example
@@ -247,22 +256,4 @@ RO means that the framework manages this variable and modules and methods should
   - Better documentation for developers
   - Cut the overhead – less is better
   - Less choices (=> less errors)
-
-=== Config
-
-  - Small user config in /etc/ for personal settings
-
-  - Split out the old Config.sh file into a config directory with sub-directories for ARCH
-    and Ostype (without sub-dirs is also possible)
-
-=== Phase 1
-
- - Drop initrd and rootfs in favour of one big initrd (better for PXE and OBDR)
- - Limit the filesystem list to (c)ramfs, ext2, initramfs
- - No floppy support
- - Use modular structure with e.g. nr. (like you propose sounds feasable)
-
-=== Phase 2
-
- - Do everything we didn't manage in Phase 1
 

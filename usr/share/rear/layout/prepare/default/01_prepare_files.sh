@@ -18,10 +18,10 @@ if [ -e $LAYOUT_FILE ] ; then
     backup_file $LAYOUT_FILE
 fi
 
-if [ -e /etc/rear/disklayout.conf ] ; then
-    cp /etc/rear/disklayout.conf $LAYOUT_FILE
+if [ -e $CONFIG_DIR/disklayout.conf ] ; then
+    cp $CONFIG_DIR/disklayout.conf $LAYOUT_FILE
     MIGRATION_MODE="true"
-    LogPrint "/etc/rear/disklayout.conf exists, entering Migration mode."
+    LogPrint "$CONFIG_DIR/disklayout.conf exists, entering Migration mode."
 fi
 
 if [ ! -e $LAYOUT_FILE ] ; then
@@ -30,7 +30,7 @@ if [ ! -e $LAYOUT_FILE ] ; then
 fi
 
 if [ -e $FS_UUID_MAP ] ; then
-    rm -f $FS_UUID_MAP  # map sure old data is deleted
+    rm -f $FS_UUID_MAP  # Make sure old data is deleted.
 fi
 
 : > $LAYOUT_TODO

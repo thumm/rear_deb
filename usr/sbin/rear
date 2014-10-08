@@ -26,7 +26,7 @@
 # Versioning
 PRODUCT="Relax-and-Recover"
 PROGRAM=${0##*/}
-VERSION=1.14
+VERSION=1.16.1
 RELEASE_DATE=Git
 
 STARTTIME=$SECONDS
@@ -56,7 +56,7 @@ KEEP_BUILD_DIR=
 RECOVERY_MODE=
 
 # Parse options
-OPTS="$(getopt -n $PROGRAM -o "dDhsSvVr:" -l "help,version" -- "$@")"
+OPTS="$(getopt -n $PROGRAM -o "c:dDhsSvVr:" -l "help,version" -- "$@")"
 if (( $? != 0 )); then
 	echo "Try \`$PROGRAM --help' for more information."
 	exit 1
@@ -68,6 +68,7 @@ while true; do
 		(-h|--help) WORKFLOW="help";;
 		(-V|--version) echo -e "$PRODUCT $VERSION / $RELEASE_DATE"; exit 0;;
 		(-v) VERBOSE=1;;
+		(-c) CONFIG_DIR="$2"; shift;;
 		(-d) DEBUG=1; VERBOSE=1;;
 		(-D) DEBUGSCRIPTS=1;;
 		(-s) SIMULATE=1; VERBOSE=1;;
@@ -154,6 +155,9 @@ if [[ -r "$LOGFILE" ]]; then
 fi
 mkdir -p $LOG_DIR
 exec 2>"$LOGFILE" || echo "ERROR: Could not create $LOGFILE" >&2
+# keep our default $LOGFILE location in a seperate variable REAR_LOGFILE
+# in case end-user overruled it in the local.conf file
+REAR_LOGFILE="$LOGFILE"
 
 case "$WORKFLOW" in
 	(help) ;;
@@ -248,6 +252,14 @@ else
 	VERBOSE=1
 	LogPrint "ERROR: The specified command '$WORKFLOW' does not exist !"
 	EXIT_CODE=1
+fi
+
+[[ "$REAR_LOGFILE" != "$LOGFILE" ]] && cat "$REAR_LOGFILE" > "$LOGFILE"
+
+if [[ $EXIT_CODE -eq 0 ]]; then
+    LogToSyslog "DONE: rc=$EXIT_CODE"
+else
+    LogToSyslog "WARNING: rc=$EXIT_CODE (see $LOGFILE)"
 fi
 
 exit $EXIT_CODE

@@ -13,6 +13,17 @@ OUTPUT=ISO
 OUTPUT_URL=http://server/path-to-push/
 ----
 
+== Bootable ISO with an external (commercial) backup software
+If you rely on your backup software to do the full restore of a system then you could define:
+
+----
+OUTPUT=ISO
+BACKUP=[TSM|NSR|DP|NBU|BACULA|BAREOS|RBME]
+----
+
+When using one of the above backup solution (commercial or open source) then there is no need to use +rear mkbackup+ as the backup workflow would be empty. Just use +rear mkrescue+
+
+Rear will incorporate the needed executables and libraries of your chosen backup solution into the rescue image of rear.
 
 == Bootable USB device with backup to USB
 If you want a bootable USB device with a (tar) backup to USB as well, you
@@ -103,7 +114,7 @@ device.
 
 ==== Configuring Relax-and-Recover to have Bacula tools
 If the rescue environment needs additional tools and workflow, this can be
-spcified by using +BACKUP=BACULA+ in the configuration file
+specified by using +BACKUP=BACULA+ in the configuration file
 _/etc/rear/local.conf_:
 
 [source,bash]
@@ -137,8 +148,8 @@ WARNING: Doing the above may replace the existing MBR of the USB device.
 [[booting-from-usb]]
 ==== Booting from USB storage device
 Before you can recover our DR backup, it is important to configure the BIOS to
-boot from the USB device. In some cases it is required to go into to the BIOS
-(+F9+ during boot) to change the boot-order of devices. (In BIOS select
+boot from the USB device. In some cases it is required to go into the BIOS setup
+(+F9+ during boot) to change the boot-order of devices. (In BIOS setup select
 +Standard Boot Order (IPL)+)
 
 Once booted from the USB device, select the system you like to recover from

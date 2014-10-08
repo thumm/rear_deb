@@ -25,6 +25,15 @@ function read_and_strip_file () {
 	fi
 }
 
+function is_numeric () {
+    # simple test if var is an integer
+    if expr $1 + 0 >/dev/null 2>&1 ; then
+        echo $1
+    else
+        echo 0
+    fi
+}
+
 ######
 ### Functions for dealing with URLs
 ######
@@ -48,7 +57,7 @@ url_path() {
     echo /${path#*/}
 }
 
-output_path() {
+backup_path() {
     local scheme=$1
     local path=$2
     case $scheme in
@@ -58,6 +67,15 @@ output_path() {
        (file)  # type file needs a local path (must be mounted by user)
            path="$path/${NETFS_PREFIX}"
            ;;
+       (iso)
+           if [[ "$WORKFLOW" = "recover" ]]; then
+               # The backup is located inside the ISO mount point when we do a recover
+               path="${BUILD_DIR}/outputfs${path}"
+           else
+               # The backup will be located on the ISO temporary dir
+               path="${TMP_DIR}/isofs${path}"
+           fi
+           ;;
        (*)     # nfs, cifs, usb, a.o. need a temporary mount-path 
            path="${BUILD_DIR}/outputfs/${NETFS_PREFIX}"
            ;;
@@ -65,11 +83,30 @@ output_path() {
     echo "$path"
 }
 
+output_path() {
+    local scheme=$1
+    local path=$2
+    case $scheme in
+       (tape)  # no path for tape required
+           path=""
+           ;;
+       (file)  # type file needs a local path (must be mounted by user)
+           path="$path/${OUTPUT_PREFIX}"
+           ;;
+       (*)     # nfs, cifs, usb, a.o. need a temporary mount-path 
+           path="${BUILD_DIR}/outputfs/${OUTPUT_PREFIX}"
+           ;;
+    esac
+    echo "$path"
+}
+
+
 ### Mount URL $1 at mountpoint $2[, with options $3]
 mount_url() {
     local url=$1
     local mountpoint=$2
-    local options=${3:-"rw,noatime"}
+    local defaultoptions="rw,noatime"
+    local options=${3:-"$defaultoptions"}
 
     ### Generate a mount command
     local mount_cmd
@@ -78,21 +115,34 @@ mount_url() {
             ### Don't need to mount anything for these
             return 0
             ;;
+        (iso)
+            if [[ "$WORKFLOW" = "recover" ]]; then
+                mount_cmd="mount /dev/disk/by-label/${ISO_VOLID} $mountpoint"
+            else
+                return 0
+            fi
+            ;;
         (var)
             ### The mount command is given by variable in the url host
             local var=$(url_host $url)
             mount_cmd="${!var} $mountpoint"
             ;;
         (cifs)
-            if grep -qP '\bcred=\b' <<<$options; then
-                mount_cmd="mount $v -o $options //$(url_host $url)$(url_path $url) $mountpoint"
-            else
+            if [ x"$options" = x"$defaultoptions" ];then
                 mount_cmd="mount $v -o $options,guest //$(url_host $url)$(url_path $url) $mountpoint"
+            else
+                mount_cmd="mount $v -o $options //$(url_host $url)$(url_path $url) $mountpoint"
             fi
             ;;
         (usb)
             mount_cmd="mount $v -o $options $(url_path $url) $mountpoint"
             ;;
+	(sshfs)
+	    mount_cmd="sshfs $(url_host $url):$(url_path $url) $mountpoint -o $options"
+            ;;
+	(davfs)
+	    mount_cmd="mount $v -t davfs http://$(url_host $url)$(url_path $url) $mountpoint"
+	    ;;
         (*)
             mount_cmd="mount $v -t $(url_scheme $url) -o $options $(url_host $url):$(url_path $url) $mountpoint"
             ;;
@@ -116,6 +166,24 @@ umount_url() {
             ### Don't need to umount anything for these
             return 0
             ;;
+        (iso)
+            if [[ "$WORKFLOW" != "recover" ]]; then
+                return 0
+            fi
+            ;;
+	    (sshfs)
+	        umount_cmd="fusermount -u $mountpoint"
+	    ;;
+	    (davfs)
+	        umount_cmd="umount $mountpoint"
+            # Wait for 3 sek. then remove the cache-dir /var/cache/davfs
+            sleep 30
+            # ToDo: put in here the cache-dir from /etc/davfs2/davfs.conf
+            # and delete only the just used cache
+            #rm -rf /var/cache/davfs2/*<mountpoint-hash>*
+            rm -rf /var/cache/davfs2/*outputfs*
+            
+	    ;;
         (var)
             local var=$(url_host $url)
             umount_cmd="${!var} $mountpoint"

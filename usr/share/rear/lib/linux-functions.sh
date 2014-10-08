@@ -2,19 +2,8 @@
 #
 # linux functions for Relax-and-Recover
 #
-#    Relax-and-Recover is free software; you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation; either version 2 of the License, or
-#    (at your option) any later version.
-
-#    Relax-and-Recover is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
-
-#    You should have received a copy of the GNU General Public License
-#    along with Relax-and-Recover; if not, write to the Free Software
-#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+# This file is part of Relax and Recover, licensed under the GNU General
+# Public License. Refer to the included LICENSE for full text of license.
 
 # The way how we use Bash with lots of (nested) functions and read etc. seems to trigger a Bash
 # bug that causes leaked file descriptors. lvm likes to complain about that but since we
@@ -102,8 +91,10 @@ FindDrivers() {
 # optionally $1 specifies the directory where to search for
 # drivers files
 FindStorageDrivers() {
-	[ "$STORAGE_DRIVERS" ]
-	StopIfError "FindStorageDrivers called but STORAGE_DRIVERS is empty"
+	if (( ${#STORAGE_DRIVERS[@]} == 0 )); then
+		grep -E 'kernel/drivers/(block|firewire|ide|ata|md|message|scsi|usb/storage)' /lib/modules/$KERNEL_VERSION/modules.builtin
+		StopIfError "FindStorageDrivers called but STORAGE_DRIVERS is empty and no builtin storage modules found"
+	fi 
 	{
 		while read module junk; do
 			IsInArray "$module" "${STORAGE_DRIVERS[@]}" && echo $module
@@ -242,6 +233,13 @@ ResolveModules () {
 		module=${module#.o}  # strip trailing ".o" just in case.
 		module=${module#.ko}  # strip trailing ".ko" just in case.
 
+		# Check if the module is not in the exclude list
+		for emodule in ${EXCLUDE_MODULES[@]}; do
+			if [ "$module" = "$emodule" ]; then
+				continue 2
+			fi
+		done
+
 		# Check if the module actually exists
 		if ! modinfo $module &>/dev/null; then
 			continue
@@ -351,5 +349,10 @@ EOF
 # Return the filesystem name related to a path
 function filesystem_name() {
     local path=$1
-    df $path | awk 'END { print $6 }'
+    local fs=$(df -Pl "$path" | awk 'END { print $6 }')
+    if [[ -z "$fs" ]]; then
+        echo "/"
+    else
+        echo "$fs"
+    fi
 }

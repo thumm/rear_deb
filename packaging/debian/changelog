@@ -1,7 +1,27 @@
+rear (1.16.1-1) stable; urgency=low
+
+  * script validation now works for bash v3 and v4
+  * updated man page and release notes
+  * code styling improvements
+  * minor bug fixes
+
+rear (1.16-1) stable; urgency=high
+
+  * new features
+  * lots of bug fixes
+
+ -- Gratien Dhaese <gratien.dhaese@gmail.com> Sun 04 May 2014 21:00:36 +0100
+rear (1.15-1) stable; urgency=high
+
+  * new features
+  * bugfixes
+
+ -- Gratien Dhaese <gratien.dhaese@gmail.com> Wed, 09 Oct 2013 16:15:21 +0100
 rear (1.14-1) stable; urgency=high
 
-  * majpr bugfixes
+  * major bugfixes
 
+ -- Dag Wieers <dag@wieers.com> Mon, 25 Jun 2012 12:46:21 +0100
 rear (1.13.0-1) stable; urgency=low
 
   * new features

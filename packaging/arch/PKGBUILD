@@ -6,9 +6,10 @@ pkgdesc="Linux Disaster Recovery"
 arch=(any)
 url="http://relax-and-recover.org/"
 license=('GPL')
-depends=(lsb-release iproute2 parted mingetty cpio)
+depends=(lsb-release iproute2 parted mingetty cpio openssl gawk)
 optdepends=( 'nfs-utils: to save images to NFS shares'
-             'cdrkit: to create ISO images' )
+             'cdrkit: to create ISO images'
+             'syslinux: to create bootable media')
 makedepends=('git' 'asciidoc' 'xmlto')
 provides=('rear')
 backup=('etc/rear/local.conf')

@@ -3,7 +3,17 @@
 # check if we have USE_DHCLIENT=y, if not then we run 60/62 scripts
 [[ -z "$USE_DHCLIENT"  ]] && return
 
+# if 'noip' is gicen on boot prompt then skip dhcp start-up
+if [[ -e /proc/cmdline ]] ; then
+    if grep -q 'noip' /proc/cmdline ; then
+        return
+    fi
+fi
+
 echo "Attempting to start the DHCP client daemon"
+
+# To be sure that network is properly initialized (get_device_by_hwaddr sees network interfaces)
+sleep 5
 
 . /usr/share/rear/lib/network-functions.sh
 
@@ -33,7 +43,7 @@ for dev in `get_device_by_hwaddr` ; do
 			dhclient -lf /var/lib/dhclient/dhclient.leases.${DEVICE} -pf /var/run/dhclient.pid -cf /etc/dhclient.conf ${DEVICE}
 		;;
 		(dhcpcd)
-			dhcpcd -c /bin/dhcpcd.sh ${DEVICE}
+			dhcpcd ${DEVICE}
 		;;
 	esac
 

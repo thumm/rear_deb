@@ -1,14 +1,15 @@
+# Test for the syslinux version
 function get_syslinux_version {
     local syslinux_version
 
-    # Test for the syslinux version
     syslinux_version=$(get_version extlinux --version)
+
     if [[ -z "$syslinux_version" ]]; then
         syslinux_version=$(get_version syslinux --version)
     fi
 
     if [[ -z "$syslinux_version" ]]; then
-        syslinux_version=$(strings $SYSLINUX_DIR/isolinux.bin | grep ISOLINUX | head -1 | cut -d' ' -f2)
+        syslinux_version=$(strings $SYSLINUX_DIR/isolinux.bin | awk '/^ISOLINUX / { print $2 }')
     fi
 
     if [[ -z "$syslinux_version" ]]; then
@@ -155,8 +156,8 @@ function make_syslinux_config {
 	echo "display message"
 	echo "F1 message"
 
-	if [[ -s "$CONFIG_DIR/templates/rear.help" ]]; then
-		cp $v "$CONFIG_DIR/templates/rear.help" "$BOOT_DIR/rear.help" >&2
+	if [[ -s $(get_template "rear.help") ]]; then
+		cp $v $(get_template "rear.help") "$BOOT_DIR/rear.help" >&2
 		echo "F2 rear.help"
 		echo "say F2 - Show help"
 		syslinux_menu "TABMSG Press [Tab] to edit, [F2] for help, [F1] for version info"
@@ -175,14 +176,24 @@ function make_syslinux_config {
 			"${BACKUP:+BACKUP=$BACKUP} ${OUTPUT:+OUTPUT=$OUTPUT} ${BACKUP_URL:+BACKUP_URL=$BACKUP_URL}"
 	echo "kernel kernel"
 	echo "append initrd=initrd.cgz root=/dev/ram0 vga=normal rw $KERNEL_CMDLINE"
-
+	echo ""
+	
+	echo "say rear - Recover $(uname -n)"
+	echo "label rear"
+	syslinux_menu "label Automatic ^Recover $(uname -n)"
+	syslinux_menu_help "Rescue image kernel $KERNEL_VERSION ${IPADDR:+on $IPADDR} $(date -R)" \
+			"${BACKUP:+BACKUP=$BACKUP} ${OUTPUT:+OUTPUT=$OUTPUT} ${BACKUP_URL:+BACKUP_URL=$BACKUP_URL}"
+	echo "kernel kernel"
+	echo "append initrd=initrd.cgz root=/dev/ram0 vga=normal rw $KERNEL_CMDLINE auto_recover"
+	echo ""
+	
 	syslinux_menu separator
 	echo "label -"
 	syslinux_menu "label Other actions"
 	syslinux_menu "disable"
 	echo ""
 
-	if [[ "$FEATURE_SYSLINUX_MENU_HELP" && -r "$CONFIG_DIR/templates/rear.help" ]]; then
+	if [[ "$FEATURE_SYSLINUX_MENU_HELP" && -r $(get_template "rear.help") ]]; then
 		echo "label help"
 		syslinux_menu "label ^Help for $PRODUCT"
 		syslinux_menu_help "More information about Relax-and-Recover and the steps for recovering your system"
@@ -261,6 +272,23 @@ function make_syslinux_config {
 			echo "localboot -1"
 		fi
 		echo ""
+	fi
+
+	# Add needed libraries for syslinux v5 and hdt
+	if [[ -r "$SYSLINUX_DIR/ldlinux.c32" ]]; then
+		cp $v "$SYSLINUX_DIR/ldlinux.c32" "$BOOT_DIR/ldlinux.c32" >&2
+	fi
+	if [[ -r "$SYSLINUX_DIR/libcom32.c32" ]]; then
+		cp $v "$SYSLINUX_DIR/libcom32.c32" "$BOOT_DIR/libcom32.c32" >&2
+	fi
+	if [[ -r "$SYSLINUX_DIR/libgpl.c32" ]]; then
+		cp $v "$SYSLINUX_DIR/libgpl.c32" "$BOOT_DIR/libgpl.c32" >&2
+	fi
+	if [[ -r "$SYSLINUX_DIR/libmenu.c32" ]]; then
+		cp $v "$SYSLINUX_DIR/libmenu.c32" "$BOOT_DIR/libmenu.c32" >&2
+	fi
+	if [[ -r "$SYSLINUX_DIR/libutil.c32" ]]; then
+		cp $v "$SYSLINUX_DIR/libutil.c32" "$BOOT_DIR/libutil.c32" >&2
 	fi
 
 	if [[ -r "$SYSLINUX_DIR/hdt.c32" ]]; then

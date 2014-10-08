@@ -14,6 +14,10 @@ Log "Saving Filesystem layout."
             Log "$device is not a block device, skipping."
             continue
         fi
+        if [ "$fstype" = "iso9660" ] ; then
+            Log "$device is CD/DVD type device [$fstype], skipping."
+            continue
+        fi
 
         if [[ $device == /dev/disk/by-uuid* ]]; then
           ndevice=$(readlink -f $device)
@@ -47,6 +51,8 @@ Log "Saving Filesystem layout."
                 nr_inodes=$($tunefs -l $device | grep "Inode count" | tr -d " " | cut -d ":" -f "2")
                 let "bytes_per_inode=$nr_blocks*$blocksize/$nr_inodes"
 
+                default_mount_options=$(tune2fs -l $device | grep -i "Default mount options" | cut -d ":" -f "2" | awk '{$1=$1};1' | tr ' ' ',' | grep -v none)
+
                 # translate check_interval from seconds to days
                 let check_interval=$check_interval/86400
 
@@ -54,11 +60,15 @@ Log "Saving Filesystem layout."
                 echo -n " blocksize=$blocksize reserved_blocks=$reserved_percentage%"
                 echo -n " max_mounts=$max_mounts check_interval=${check_interval}d"
                 echo -n " bytes_per_inode=$bytes_per_inode"
+                if [[ -n $default_mount_options ]]; then
+                    echo -n " default_mount_options=$default_mount_options"
+                fi
                 ;;
             vfat)
                 # Make sure we don't get any other output from dosfslabel (errors go to stdout :-/)
                 label=$(dosfslabel $device | tail -1)
-                echo -n " uuid= label=$label"
+		uuid=$(blkid_uuid_of_device $device)
+                echo -n " uuid=$uuid label=$label"
                 ;;
             xfs)
                 uuid=$(xfs_admin -u $device | cut -d'=' -f 2 | tr -d " ")
@@ -71,7 +81,7 @@ Log "Saving Filesystem layout."
                 echo -n "uuid=$uuid label=$label"
                 ;;
             btrfs)
-                uuid=$(btrfs filesystem show $device | grep -i uuid | cut -d":" -f "3" | tr -d " ")
+                uuid=$(btrfs filesystem show $device | grep -i "uuid:" | cut -d":" -f "3" | tr -d " ")
                 label=$(btrfs filesystem show $device | grep -i label | cut -d":" -f "2" | sed -e 's/uuid//' -e 's/^ //')
                 [[ "$(echo $label)" = "none" ]] && label=
                 echo -n "uuid=$uuid label=$label"
@@ -80,8 +90,15 @@ Log "Saving Filesystem layout."
 
         options=${options#(}
         options=${options%)}
-        echo -n " options=$options"
 
+	# in case of btrfs we could deal with subvolumes - subvol option needed or not?
+	case "$fstype" in
+	    btrfs)
+		subvol=$(btrfs subvolume show $mountpoint | grep "Name:" | awk '{print $2}')
+		[[ ! -z "$subvol" ]] && options="$options,subvol=$subvol"
+		;;
+	esac
+        echo -n " options=$options"
         echo
     done < <(mount)
 ) >> $DISKLAYOUT_FILE

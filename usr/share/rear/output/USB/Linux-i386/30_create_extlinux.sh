@@ -115,6 +115,16 @@ ${BACKUP:+BACKUP=$BACKUP} ${OUTPUT:+OUTPUT=$OUTPUT} ${BACKUP_URL:+BACKUP_URL=$BA
     kernel /$USB_PREFIX/kernel
     append initrd=/$USB_PREFIX/initrd.cgz root=/dev/ram0 vga=normal rw $KERNEL_CMDLINE
 
+label $HOSTNAME-$time
+    menu label ${time:0:4}-${time:4:2}-${time:6:2} ${time:9:2}:${time:11:2} $usb_label_workflow - AUTOMATIC RECOVER
+    say $HOSTNAME-$time - Recover $HOSTNAME $usb_label_workflow ($time)
+    text help
+Relax-and-Recover v$VERSION - $usb_label_workflow using kernel $(uname -r) ${IPADDR:+on $IPADDR}
+${BACKUP:+BACKUP=$BACKUP} ${OUTPUT:+OUTPUT=$OUTPUT} ${BACKUP_URL:+BACKUP_URL=$BACKUP_URL}
+    endtext
+    kernel /$USB_PREFIX/kernel
+    append initrd=/$USB_PREFIX/initrd.cgz root=/dev/ram0 vga=normal rw $KERNEL_CMDLINE auto_recover
+
 EOF
 
 # Clean up older images of a given system, but keep USB_RETAIN_BACKUP_NR
@@ -250,8 +260,15 @@ Log "Creating $SYSLINUX_PREFIX/extlinux.conf"
     syslinux_has "sysdump.c32"
     syslinux_has "vesamenu.c32"
 
-    if [ -r "$CONFIG_DIR/templates/rear.help" ]; then
-        cp $v "$CONFIG_DIR/templates/rear.help" "$BUILD_DIR/outputfs/$SYSLINUX_PREFIX/rear.help" >&8
+    # Add needed libraries for syslinux v5 and hdt
+    syslinux_has "ldlinux.c32"
+    syslinux_has "libcom32.c32"
+    syslinux_has "libgpl.c32"
+    syslinux_has "libmenu.c32"
+    syslinux_has "libutil.c32"
+
+    if [ -r $(get_template "rear.help") ]; then
+        cp $v $(get_template "rear.help") "$BUILD_DIR/outputfs/$SYSLINUX_PREFIX/rear.help" >&8
         syslinux_write <<EOF
 say F1 - Show help
 F1 /boot/syslinux/rear.help
@@ -292,7 +309,7 @@ label -
 
 EOF
 
-    if [[ "$FEATURE_SYSLINUX_MENU_HELP" && -r "$CONFIG_DIR/templates/rear.help" ]]; then
+    if [[ "$FEATURE_SYSLINUX_MENU_HELP" && -r $(get_template "rear.help") ]]; then
         syslinux_write <<EOF
 label help
     menu label ^Help for Relax-and-Recover

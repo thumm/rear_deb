@@ -9,7 +9,7 @@ Log "Files being copied: ${COPY_AS_IS[@]}"
 Log "Files being excluded: ${COPY_AS_IS_EXCLUDE[@]}"
 
 for f in "${COPY_AS_IS_EXCLUDE[@]}" ; do echo "$f" ; done >$TMP_DIR/copy-as-is-exclude
-tar $v -X $TMP_DIR/copy-as-is-exclude \
+tar -v -X $TMP_DIR/copy-as-is-exclude \
 	-P -C / -c "${COPY_AS_IS[@]}" 2>$TMP_DIR/copy-as-is-filelist | \
 	tar $v -C $ROOTFS_DIR/ -x >&8
 StopIfError "Could not copy files and directories"
@@ -17,10 +17,14 @@ Log "Finished copying COPY_AS_IS"
 
 # fix rear directory if running from checkout
 if [[ "$REAR_DIR_PREFIX" ]] ; then
-    for dir in /usr/share/rear /etc/rear /var/lib/rear ; do
+    for dir in /usr/share/rear /var/lib/rear ; do
         ln $v -sf $REAR_DIR_PREFIX$dir $ROOTFS_DIR$dir>&8
     done
 fi
+
+### Copy configuration directory
+mkdir $v -p $ROOTFS_DIR/etc/rear
+cp $v -r $CONFIG_DIR/* $ROOTFS_DIR/etc/rear/ >&2
 
 COPY_AS_IS_EXELIST=()
 while read -r ; do

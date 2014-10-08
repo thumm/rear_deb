@@ -63,6 +63,7 @@ help:
   dist            - Create tar file\n\
   deb             - Create DEB package\n\
   rpm             - Create RPM package\n\
+  pacman          - Create Pacman package\n\
   obs             - Initiate OBS builds\n\
 \n\
 Relax-and-Recover make variables (optional):\n\
@@ -79,9 +80,9 @@ clean:
 ### You can call 'make validate' directly from your .git/hooks/pre-commit script
 validate:
 	@echo -e "\033[1m== Validating scripts and configuration ==\033[0;0m"
-	find etc/ usr/share/rear/conf/ -name '*.conf' | xargs bash -n
+	find etc/ usr/share/rear/conf/ -name '*.conf' | xargs -n 1 bash -n
 	bash -n $(rearbin)
-	find . -name '*.sh' | xargs bash -n
+	find . -name '*.sh' | xargs -n 1 bash -n
 ### Fails to work on RHEL4
 #	find -L . -type l
 
@@ -97,7 +98,7 @@ ifneq ($(git_date),)
 rewrite:
 	@echo -e "\033[1m== Rewriting $(specfile), $(dscfile) and $(rearbin) ==\033[0;0m"
 	sed -i.orig \
-		-e 's#^Source:.*#Source: https://github.com/downloads/rear/rear/$(name)-$(distversion).tar.gz#' \
+		-e 's#^Source:.*#Source: https://sourceforge.net/projects/rear/files/rear/${version}/$(name)-${distversion}.tar.gz#' \
 		-e 's#^Version:.*#Version: $(version)#' \
 		-e 's#^%define rpmrelease.*#%define rpmrelease $(rpmrelease)#' \
 		-e 's#^%setup.*#%setup -q -n $(name)-$(distversion)#' \
@@ -130,7 +131,6 @@ install-config:
 		install -Dp -m0600 etc/rear/local.conf $(DESTDIR)$(sysconfdir)/rear/local.conf
 	-[[ ! -e $(DESTDIR)$(sysconfdir)/rear/os.conf && -e etc/rear/os.conf ]] && \
 		install -Dp -m0600 etc/rear/os.conf $(DESTDIR)$(sysconfdir)/rear/os.conf
-	cp -a etc/rear/{mappings,templates} $(DESTDIR)$(sysconfdir)/rear/
 	-find $(DESTDIR)$(sysconfdir)/rear/ -name '.gitignore' -exec rm -rf {} \; &>/dev/null
 
 install-bin:
@@ -195,6 +195,20 @@ deb: dist
 	fakeroot debian/rules binary
 	-rm -rf debian/
 
+pacman: BUILD_DIR = /tmp/rear-$(distversion)
+pacman: dist
+	@echo -e "\033[1m== Building Pacman package $(name)-$(distversion) ==\033[0;0m"
+	rm -rf $(BUILD_DIR)
+	mkdir -p $(BUILD_DIR)
+	cp packaging/arch/PKGBUILD.local $(BUILD_DIR)/PKGBUILD
+	cp $(name)-$(distversion).tar.gz $(BUILD_DIR)/
+	cd $(BUILD_DIR) ; sed -i -e 's/VERSION/$(date)/' \
+		-e 's/SOURCE/$(name)-$(distversion).tar.gz/' \
+		-e 's/MD5SUM/$(shell md5sum $(name)-$(distversion).tar.gz | cut -d' ' -f1)/' \
+		PKGBUILD ; makepkg -c
+	cp $(BUILD_DIR)/*.pkg.* .
+	rm -rf $(BUILD_DIR)
+
 obs: BUILD_DIR = /tmp/rear-$(distversion)
 obs: obsname = $(shell osc ls $(obsproject) $(obspackage) | awk '/.tar.gz$$/ { gsub(".tar.gz$$","",$$1); print }')
 obs: dist
@@ -207,17 +221,17 @@ ifneq ($(OFFICIAL),)
 	-osc branch Archiving:Backup:Rear:Snapshot rear $(obsproject) $(obspackage)
 	-osc detachbranch $(obsproject) $(obspackage)
 endif
-	osc co -c $(obsproject) $(obspackage) -o $(BUILD_DIR)
-	-osc del $(BUILD_DIR)/*.tar.gz
-	cp $(name)-$(distversion).tar.gz $(BUILD_DIR)
-	tar -xOzf $(name)-$(distversion).tar.gz -C $(BUILD_DIR) $(name)-$(distversion)/$(specfile) >$(BUILD_DIR)/$(name).spec
-	tar -xOzf $(name)-$(distversion).tar.gz -C $(BUILD_DIR) $(name)-$(distversion)/$(dscfile) >$(BUILD_DIR)/$(name).dsc
-	tar -xOzf $(name)-$(distversion).tar.gz -C $(BUILD_DIR) $(name)-$(distversion)/packaging/debian/control >$(BUILD_DIR)/debian.control
-	tar -xOzf $(name)-$(distversion).tar.gz -C $(BUILD_DIR) $(name)-$(distversion)/packaging/debian/rules >$(BUILD_DIR)/debian.rules
-	echo -e "rear ($(version)-$(debrelease)) stable; urgency=low\n\n  * new snapshot build\n\n -- OpenSUSE Build System <obs@relax-and-recover.org> $$(date -R)" >$(BUILD_DIR)/debian.changelog
-	tar -xOzf $(name)-$(distversion).tar.gz -C $(BUILD_DIR) $(name)-$(distversion)/packaging/debian/changelog >>$(BUILD_DIR)/debian.changelog
-	cd $(BUILD_DIR); osc addremove
-	osc ci -m "Update to $(name)-$(distversion)" $(BUILD_DIR)
+	(cd $(BUILD_DIR) ; osc co -c $(obsproject) $(obspackage) )
+	-(cd $(BUILD_DIR)/$(obspackage) ; osc del *.tar.gz )
+	cp $(name)-$(distversion).tar.gz $(BUILD_DIR)/$(obspackage)
+	tar -xOzf $(name)-$(distversion).tar.gz -C $(BUILD_DIR)/$(obspackage) $(name)-$(distversion)/$(specfile) >$(BUILD_DIR)/$(obspackage)/$(name).spec
+	tar -xOzf $(name)-$(distversion).tar.gz -C $(BUILD_DIR)/$(obspackage) $(name)-$(distversion)/$(dscfile) >$(BUILD_DIR)/$(obspackage)/$(name).dsc
+	tar -xOzf $(name)-$(distversion).tar.gz -C $(BUILD_DIR)/$(obspackage) $(name)-$(distversion)/packaging/debian/control >$(BUILD_DIR)/$(obspackage)/debian.control
+	tar -xOzf $(name)-$(distversion).tar.gz -C $(BUILD_DIR)/$(obspackage) $(name)-$(distversion)/packaging/debian/rules >$(BUILD_DIR)/$(obspackage)/debian.rules
+	echo -e "rear ($(version)-$(debrelease)) stable; urgency=low\n\n  * new snapshot build\n\n -- OpenSUSE Build System <obs@relax-and-recover.org> $$(date -R)" >$(BUILD_DIR)/$(obspackage)/debian.changelog
+	tar -xOzf $(name)-$(distversion).tar.gz -C $(BUILD_DIR)/$(obspackage) $(name)-$(distversion)/packaging/debian/changelog >>$(BUILD_DIR)/$(obspackage)/debian.changelog
+	cd $(BUILD_DIR)/$(obspackage); osc addremove
+	cd $(BUILD_DIR)/$(obspackage); osc ci -m "Update to $(name)-$(distversion)" $(BUILD_DIR)/$(obspackage)
 	rm -rf $(BUILD_DIR)
 	@echo -e "\033[1mNow visit https://build.opensuse.org/package/show?package=rear&project=$(obsproject)"
 	@echo -e "or inspect the queue at: https://build.opensuse.org/monitor\033[0;0m"

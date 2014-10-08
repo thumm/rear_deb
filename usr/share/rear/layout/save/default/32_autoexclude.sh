@@ -1,5 +1,5 @@
 # Automatically exclude multipath devices
-if [ -n "$AUTOEXCLUDE_MULTIPATH" ] ; then
+if [[ "$AUTOEXCLUDE_MULTIPATH" =~ ^[yY1] ]] ; then
     while read multipath device devices junk ; do
         Log "Automatically excluding multipath device $device."
         mark_as_done "$device"
@@ -24,7 +24,7 @@ if [[ "$AUTOEXCLUDE_PATH" ]] ; then
 fi
 
 # Automatically exclude disks that do not have filesystems mounted.
-if [ -n "$AUTOEXCLUDE_DISKS" ] ; then
+if [[ "$AUTOEXCLUDE_DISKS" =~ ^[yY1] ]] ; then
     used_disks=()
 
     # List disks used by mountpoints

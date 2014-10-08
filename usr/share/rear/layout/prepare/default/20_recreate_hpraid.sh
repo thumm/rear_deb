@@ -4,7 +4,7 @@ if ! grep -q '^cciss ' /proc/modules; then
     return
 fi
 
-ORIG_LAYOUT_CODE=$LAYOUT_CODE
+ORIG_LAYOUT_CODE="$LAYOUT_CODE"
 
 LAYOUT_CODE=$VAR_DIR/layout/hpraid.sh
 
@@ -28,7 +28,7 @@ while read -u 3 type name junk ; do
         create_device "$name" "smartarray"
         restored_controllers=( "${restored_controllers[@]}" $name )
     fi
-done 3< <(grep "^smartarray " $LAYOUT_FILE)
+done 3< <(grep "^smartarray " "$LAYOUT_FILE")
 
 # Now, recreate all logical drives whose controller was cleared.
 while read type name remainder junk ; do
@@ -36,9 +36,12 @@ while read type name remainder junk ; do
     if IsInArray "$ctrl" "${restored_controllers[@]}" ; then
         create_device "$name" "logicaldrive"
     fi
-done < <(grep "^logicaldrive " $LAYOUT_FILE)
+done < <(grep "^logicaldrive " "$LAYOUT_FILE")
 
-cat <<'EOF' >>$LAYOUT_CODE
+### engage scsi can fail in certain cases
+cat <<'EOF' >>"$LAYOUT_CODE"
+set +e
+
 # make the CCISS tape device visible
 for host in /proc/driver/cciss/cciss?; do
     Log "Engage SCSI on host $host"
@@ -46,15 +49,14 @@ for host in /proc/driver/cciss/cciss?; do
 done
 
 sleep 2
-
-set +e
 EOF
 
 if [ ${#restored_controllers} -ne 0 ] ; then
+    define_HPSSACLI  # call function to find proper Smart Storage Administrator CLI command - define $HPSSACLI var
     RESTORE_OK=
     while [[ -z "$RESTORE_OK" ]]; do
         (
-            . $LAYOUT_CODE
+            . "$LAYOUT_CODE"
         )
 
         if (( $? == 0 )); then
@@ -73,18 +75,18 @@ if [ ${#restored_controllers} -ne 0 ] ; then
                 "Abort Relax-and-Recover"
             )
 
-            timestamp=$(stat --format="%Y" $LAYOUT_CODE)
+            timestamp=$(stat --format="%Y" "$LAYOUT_CODE")
             select choice in "${choices[@]}"; do
-                timestamp=$(stat --format="%Y" $LAYOUT_FILE)
+                timestamp=$(stat --format="%Y" "$LAYOUT_FILE")
                 case "$REPLY" in
-                    (1) less $LOGFILE;;
-                    (2) rear_shell "" "hpacucli ctrl all show detail
-hpacucli ctrl all show config detail
-hpacucli ctrl all show config
+                    (1) less "$LOGFILE";;
+                    (2) rear_shell "" "$HPSSACLI ctrl all show detail
+$HPSSACLI ctrl all show config detail
+$HPSSACLI ctrl all show config
 ";;
 #                    (3) vi $LAYOUT_FILE;;
-                    (3) vi $LAYOUT_CODE;;
-                    (4) if (( $timestamp < $(stat --format="%Y" $LAYOUT_CODE) )); then
+                    (3) vi "$LAYOUT_CODE";;
+                    (4) if (( $timestamp < $(stat --format="%Y" "$LAYOUT_CODE") )); then
                             break
                         else
                             Print "Script $LAYOUT_CODE has not been changed, restarting has no impact."
@@ -111,4 +113,4 @@ hpacucli ctrl all show config
     done
 fi
 
-LAYOUT_CODE=$ORIG_LAYOUT_CODE
+LAYOUT_CODE="$ORIG_LAYOUT_CODE"
